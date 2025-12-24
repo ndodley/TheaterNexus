@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.env
+
+# Django
+staticfiles/
+media/
+# If you ever used SQLite locally
+# db.sqlite3
+
+# Node / Vite
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
