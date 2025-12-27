@@ -1,11 +1,27 @@
+/* Theme variables */
 :root {
+  /* Light theme (default) */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #0f172a; /* slate-900 */
+  --muted: #475569; /* slate-600 */
+  --primary: #7c3aed; /* purple-600 */
+  --primary-700: #6d28d9;
+  --primary-300: #a78bfa;
+  --accent: #0891b2;
+  --border: #e2e8f0; /* slate-200 */
+  /* Navbar theme (light default) */
+  --nav-bg: #7c3aed; /* solid purple */
+  --nav-text: #0b1020; /* near-black */
+  --nav-hover: #111827; /* darker hover */
+  --shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+
+  color-scheme: light;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--text);
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,21 +29,46 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+html[data-theme="dark"] {
+  /* Dark theme overrides */
+  --bg: #0f0f14;
+  --surface: #161722;
+  --text: #e9e9ef;
+  --muted: #b9b9c8;
+  --primary: #7c3aed;
+  --primary-700: #6d28d9;
+  --primary-300: #a78bfa;
+  --accent: #22d3ee;
+  --border: #292a3a;
+  --nav-bg: #7c3aed; /* same purple */
+  --nav-text: #ffffff;
+  --nav-hover: rgba(255,255,255,0.9);
+  --shadow: 0 8px 24px rgba(0,0,0,0.25);
+  color-scheme: dark;
 }
 
-body {
+a {
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--primary-300);
+}
+
+html, body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+  transition: background-color 250ms ease, color 250ms ease;
+}
+
+#root {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
 }
 
 h1 {
@@ -36,33 +77,102 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 0.6em 1.1em;
+  font-size: 0.95em;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--surface);
+  color: var(--text);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--primary);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.22);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid var(--primary-300);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Layout helpers */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--primary-300);
+  font-size: 12px;
+  margin-right: 8px;
+}
+.scroll-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 180px;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  scroll-snap-type: x proximity;
+}
+.scroll-row > .card {
+  scroll-snap-align: start;
+}
+.nav {
+  backdrop-filter: saturate(180%) blur(8px);
+  background: var(--nav-bg);
+  border-bottom: 1px solid transparent;
+}
+.nav .logo,
+.nav a {
+  color: var(--nav-text);
+}
+.nav a:hover {
+  color: var(--nav-hover);
+}
+.nav button {
+  background: transparent;
+  border-color: rgba(255,255,255,0.4);
+  color: var(--nav-text);
+}
+.logo {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--primary);
+}
+
+/* Simple fade/slide animations */
+.fade-in {
+  animation: fadeIn 400ms ease both;
+}
+.slide-up {
+  animation: slideUp 450ms ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
