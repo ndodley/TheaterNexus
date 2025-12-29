@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'movies',
     'theaters',
+    'showtimes',
 ]
 
 MIDDLEWARE = [
@@ -113,7 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Use your local theater timezone so admin and API align
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
@@ -146,6 +148,9 @@ REST_FRAMEWORK = {
     # Return decimals as numbers (floats) instead of strings
     'COERCE_DECIMAL_TO_STRING': False,
 }
+
+# Minutes added to movie duration to calculate showtime end
+SHOWTIME_BUFFER_MINUTES = 15
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
