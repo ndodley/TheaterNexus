@@ -9,6 +9,7 @@ export default function Navbar() {
         <nav style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <NavLink to="/" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })} end>Home</NavLink>
           <NavLink to="/movies" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Movies</NavLink>
+          <NavLink to="/showtimes" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Showtimes</NavLink>
           <ThemeToggle />
         </nav>
       </div>
