@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'accounts',
     'movies',
     'theaters',
     'showtimes',
@@ -130,10 +133,12 @@ STATIC_URL = 'static/'
 # Frontend dev server CORS/CSRF configuration
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
 # Media files (uploaded images)
@@ -144,6 +149,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     # Return decimals as numbers (floats) instead of strings
     'COERCE_DECIMAL_TO_STRING': False,
@@ -156,3 +164,16 @@ SHOWTIME_BUFFER_MINUTES = 15
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
+# SimpleJWT configuration (tweak durations as needed)
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

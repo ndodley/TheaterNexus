@@ -21,8 +21,8 @@ export function ThemeToggle() {
   const toggle = () => setChoice(c => (c === 'light' ? 'dark' : 'light'))
 
   return (
-    <button aria-label="Toggle theme" onClick={toggle}>
-      {choice === 'light' ? '🌙 Dark' : '☀️ Light'}
+    <button aria-label="Toggle theme" onClick={toggle} className="btn btn-ghost">
+      {choice === 'light' ? '🌙' : '☀️'}
     </button>
   )
 }

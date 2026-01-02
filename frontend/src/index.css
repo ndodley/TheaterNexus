@@ -108,6 +108,20 @@ button:focus-visible {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 18px;
+  color-scheme: light dark;
+}
+
+.btn { display:inline-flex; align-items:center; gap:8px; border-radius:8px; padding:8px 12px; font-weight:600; border:1px solid var(--border); color: var(--nav-text); }
+.btn-primary { background: var(--primary-300); color:#0b0f13; border-color: transparent; }
+.btn-ghost { background: transparent; }
+.chip { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); font-size:12px; opacity:0.8 }
+.card { border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,0.02) }
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px }
+.error { color:#ef4444; font-weight:600 }
+
+form label { display:grid; gap:6px }
+form input[type="text"], form input[type="email"], form input[type="password"], form input[type="date"], form input[type="file"] {
+  padding:10px 12px; border-radius:8px; border:1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--nav-text);
   box-shadow: var(--shadow);
   transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
 }
