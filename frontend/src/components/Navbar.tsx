@@ -18,6 +18,9 @@ export default function Navbar() {
           <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="MP2 Home">MP2 Tickets</Link>
           <NavLink to="/movies" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Movies</NavLink>
           <NavLink to="/showtimes" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Showtimes</NavLink>
+          {isAuthenticated && (
+            <NavLink to="/orders" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Orders</NavLink>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {user?.role === 'admin' && (
@@ -34,6 +37,10 @@ export default function Navbar() {
           ) : (
             user && (
               <>
+                <NavLink to="/cart" className="btn btn-ghost" title="Cart" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span role="img" aria-label="Cart">🛒</span>
+                  <span>Cart</span>
+                </NavLink>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--primary-200)', display: 'grid', placeItems: 'center', color: '#000', fontWeight: 700 }}>

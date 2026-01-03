@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/', include('movies.urls')),
     path('api/', include('theaters.urls')),
     path('api/', include('showtimes.urls')),
+    path('api/orders/', include('orders.urls')),
 ]
 
 if settings.DEBUG:

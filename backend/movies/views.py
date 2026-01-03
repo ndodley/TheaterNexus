@@ -1,4 +1,5 @@
 from rest_framework import viewsets, filters
+from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Genre, Movie
@@ -9,6 +10,8 @@ class GenreViewSet(viewsets.ModelViewSet):
 	queryset = Genre.objects.all()
 	serializer_class = GenreSerializer
 	http_method_names = ["get", "post", "head", "options"]
+	permission_classes = [AllowAny]
+	authentication_classes = []
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -17,6 +20,8 @@ class MovieViewSet(viewsets.ModelViewSet):
 	http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
 	filter_backends = [filters.SearchFilter]
 	search_fields = ["title", "plot_summary"]
+	permission_classes = [AllowAny]
+	authentication_classes = []
 
 	def get_queryset(self):
 		qs = super().get_queryset()

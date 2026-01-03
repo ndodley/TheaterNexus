@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'movies',
     'theaters',
     'showtimes',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -177,3 +178,15 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# Stripe configuration (set these via environment variables in development)
+import os
+# Read from environment if set; otherwise use the explicit keys configured below.
+# NOTE: Do not pass the actual key string to os.environ.get — it returns None.
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY') or 'sk_test_51Skyy2GoXnzvIyIBwMbiMmJnqr77TCMhfKdB9okdRN5cgiphDsrcYbbSJtf5htWBzLcXQfApDI43a8jwdLdqfs3G00HZFZyIqF'
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY') or 'pk_test_51Skyy2GoXnzvIyIBmSz4KMWSsWNCDH8xVlLVVvfQV8IuCXPwL3SfLBXOG1s3jCosoZ2tBMJP5VK0nj7XikRVtHQY00Jzmkd1LG'
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
+# Cart/Orders defaults
+CART_HOLD_MINUTES = 10
+ORDER_CURRENCY = 'usd'
