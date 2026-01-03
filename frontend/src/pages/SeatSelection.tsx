@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api, imageUrl } from '../api'
 import type { ShowTime, Seat } from '../types'
+import { useAuth } from '../auth/AuthContext.tsx'
 
 interface SeatsResponse {
   showtime: ShowTime
@@ -9,6 +10,7 @@ interface SeatsResponse {
 }
 
 export default function SeatSelectionPage() {
+  const { isAuthenticated } = useAuth()
   const { id } = useParams<{ id: string }>()
   const [data, setData] = useState<SeatsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -46,6 +48,23 @@ export default function SeatSelectionPage() {
       else next.add(seat.id)
       return next
     })
+  }
+
+  const addSelectedToCart = async () => {
+    if (!id) return
+    if (!isAuthenticated) { window.location.href = '/login'; return }
+    const showtimeId = Number(id)
+    try {
+      const seatIds = Array.from(selected)
+      // Add each selected seat to cart; backend will refresh holds if already present
+      for (const seatId of seatIds) {
+        await api.post('/api/orders/cart/add/', { showtime_id: showtimeId, seat_id: seatId })
+      }
+      // Navigate to cart page
+      window.location.href = '/cart'
+    } catch (err) {
+      console.error('Failed to add to cart', err)
+    }
   }
 
   if (loading) return <section className="container"><div className="card">Loading seats…</div></section>
@@ -111,7 +130,7 @@ export default function SeatSelectionPage() {
                 <div><strong>{selected.size}</strong> seat{selected.size === 1 ? '' : 's'} selected</div>
                 <div style={{opacity:0.85}}>Subtotal: <strong>${total}</strong></div>
               </div>
-              <button disabled={selected.size === 0} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Continue</button>
+              <button onClick={addSelectedToCart} disabled={selected.size === 0} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Continue</button>
             </div>
           </div>
         </div>
