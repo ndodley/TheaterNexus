@@ -27,6 +27,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 		except Exception:
 			img = None
 		return {
+			'movie_id': getattr(movie, 'id', None),
 			'movie_title': getattr(movie, 'title', ''),
 			'movie_image': img,
 			'theater_name': getattr(st.screen.theater, 'name', '') if getattr(st, 'screen', None) else '',
@@ -45,13 +46,35 @@ class CartSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
 	seat_label = serializers.SerializerMethodField()
+	showtime_info = serializers.SerializerMethodField()
 
 	class Meta:
 		model = OrderItem
-		fields = ['id', 'showtime', 'seat', 'seat_label', 'unit_price']
+		fields = ['id', 'showtime', 'seat', 'seat_label', 'unit_price', 'showtime_info']
 
 	def get_seat_label(self, obj):
 		return f"{obj.seat.row}{obj.seat.number}"
+
+	def get_showtime_info(self, obj):
+		st = getattr(obj, 'showtime', None)
+		if not st:
+			return None
+		movie = getattr(st, 'movie', None)
+		img = None
+		try:
+			if movie and getattr(movie, 'image', None):
+				f = movie.image
+				img = getattr(f, 'url', None) or (str(f) if f else None)
+		except Exception:
+			img = None
+		return {
+			'movie_id': getattr(movie, 'id', None),
+			'movie_title': getattr(movie, 'title', ''),
+			'movie_image': img,
+			'theater_name': getattr(st.screen.theater, 'name', '') if getattr(st, 'screen', None) else '',
+			'screen_name': getattr(st.screen, 'name', '') if getattr(st, 'screen', None) else '',
+			'start_time': st.start_time,
+		}
 
 
 class TicketSerializer(serializers.ModelSerializer):

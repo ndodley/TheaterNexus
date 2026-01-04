@@ -127,6 +127,8 @@ class CreatePaymentIntentView(APIView):
 				intent = None
 
 		if intent is None:
+			# Provide an idempotency key derived from cart/user to avoid duplicate intents
+			idem_key = f"pi_{cart.id}_{request.user.id}_{amount}"
 			intent = stripe.PaymentIntent.create(
 				amount=amount,
 				currency=getattr(settings, 'ORDER_CURRENCY', 'usd'),
@@ -134,6 +136,7 @@ class CreatePaymentIntentView(APIView):
 					'cart_id': str(cart.id),
 					'user_id': str(request.user.id),
 				},
+				idempotency_key=idem_key,
 			)
 			if order is None:
 				order = Order.objects.create(
@@ -258,7 +261,11 @@ class OrdersListView(APIView):
 	permission_classes = [IsAuthenticated]
 
 	def get(self, request):
-		orders = Order.objects.filter(user=request.user, status=Order.STATUS_PAID).order_by('-created_at')
+		orders = (
+			Order.objects.filter(user=request.user, status=Order.STATUS_PAID)
+			.prefetch_related('items__showtime__movie', 'items__seat', 'items__showtime__screen__theater')
+			.order_by('-created_at')
+		)
 		data = OrderSerializer(orders, many=True).data
 		return Response(data)
 
@@ -267,5 +274,8 @@ class OrderDetailView(APIView):
 	permission_classes = [IsAuthenticated]
 
 	def get(self, request, order_id: int):
-		order = get_object_or_404(Order.objects.filter(user=request.user), pk=order_id)
+		order_qs = Order.objects.filter(user=request.user).prefetch_related(
+			'items__showtime__movie', 'items__seat', 'items__showtime__screen__theater'
+		)
+		order = get_object_or_404(order_qs, pk=order_id)
 		return Response(OrderSerializer(order).data)

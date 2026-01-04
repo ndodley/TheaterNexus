@@ -45,7 +45,7 @@ export default function OrdersHistoryPage() {
               </div>
               <div style={{display:'flex', gap:12, alignItems:'center'}}>
                 <div><strong>${(typeof o.total === 'number' ? o.total : parseFloat(String(o.total))).toFixed(2)}</strong> {o.currency.toUpperCase()}</div>
-                <Link to={`/orders/confirmation?order_id=${o.id}`} className="btn">View</Link>
+                <Link to={`/orders/orderdetails?order_id=${o.id}`} className="btn btn-secondary">Details</Link>
               </div>
             </li>
           ))}
