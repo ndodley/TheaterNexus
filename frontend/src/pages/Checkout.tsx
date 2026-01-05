@@ -20,7 +20,7 @@ function CheckoutForm({ orderId }: { orderId: number }) {
     setSubmitting(true)
     setError(null)
 
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+    const { error: stripeError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/orders/confirmation`,
