@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'theaters',
     'showtimes',
     'orders',
+    'reviews',
 ]
 
 MIDDLEWARE = [

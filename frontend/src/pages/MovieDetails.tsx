@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api, imageUrl } from '../api'
-import type { Movie, ShowTime } from '../types'
+import type { Movie, ShowTime, Review, ReviewSummary } from '../types'
+import { useAuth } from '../auth/AuthContext'
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -15,6 +16,16 @@ export default function MovieDetailsPage() {
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
   })
   const [selectedTheater, setSelectedTheater] = useState<number | 'all'>('all')
+
+  // Reviews state
+  const { isAuthenticated } = useAuth()
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [summary, setSummary] = useState<ReviewSummary | null>(null)
+  const [myReview, setMyReview] = useState<Review | null>(null)
+  const [draftRating, setDraftRating] = useState<number>(5)
+  const [draftTitle, setDraftTitle] = useState<string>('')
+  const [draftContent, setDraftContent] = useState<string>('')
+  const [submitting, setSubmitting] = useState<boolean>(false)
 
   useEffect(() => {
     if (!id) return
@@ -29,6 +40,75 @@ export default function MovieDetailsPage() {
       .then(res => setShowtimes(res.data))
       .catch(() => {})
   }, [id, selectedDate, selectedTheater])
+
+  // Load reviews list and summary
+  useEffect(() => {
+    if (!id) return
+    api.get(`/api/reviews/movies/${id}/`).then(res => setReviews(res.data)).catch(() => setReviews([]))
+    api.get(`/api/reviews/movies/${id}/summary/`).then(res => setSummary(res.data)).catch(() => setSummary({ movie_id: Number(id), average_rating: 0, count: 0 }))
+  }, [id])
+
+  // Load my review if authenticated
+  useEffect(() => {
+    async function loadMine() {
+      if (!id || !isAuthenticated) { setMyReview(null); return }
+      try {
+        const { data } = await api.get(`/api/reviews/movies/${id}/me/`)
+        setMyReview(data)
+        setDraftRating(data.rating)
+        setDraftTitle(data.title)
+        setDraftContent(data.content)
+      } catch {
+        setMyReview(null)
+        setDraftRating(5)
+        setDraftTitle('')
+        setDraftContent('')
+      }
+    }
+    loadMine()
+  }, [id, isAuthenticated])
+
+  async function submitReview(e: React.FormEvent) {
+    e.preventDefault()
+    if (!id || !isAuthenticated) return
+    setSubmitting(true)
+    try {
+      const payload = { rating: draftRating, title: draftTitle, content: draftContent }
+      if (myReview) {
+        const { data } = await api.put(`/api/reviews/movies/${id}/me/`, payload)
+        setMyReview(data)
+      } else {
+        await api.post(`/api/reviews/movies/${id}/`, payload)
+        // refresh my review and list
+        const mine = await api.get(`/api/reviews/movies/${id}/me/`)
+        setMyReview(mine.data)
+      }
+      const list = await api.get(`/api/reviews/movies/${id}/`)
+      setReviews(list.data)
+      const s = await api.get(`/api/reviews/movies/${id}/summary/`)
+      setSummary(s.data)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function deleteMyReview() {
+    if (!id || !isAuthenticated || !myReview) return
+    setSubmitting(true)
+    try {
+      await api.delete(`/api/reviews/movies/${id}/me/`)
+      setMyReview(null)
+      setDraftRating(5)
+      setDraftTitle('')
+      setDraftContent('')
+      const list = await api.get(`/api/reviews/movies/${id}/`)
+      setReviews(list.data)
+      const s = await api.get(`/api/reviews/movies/${id}/summary/`)
+      setSummary(s.data)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const theaters = useMemo(() => {
     const map = new Map<number, string>()
@@ -88,7 +168,10 @@ export default function MovieDetailsPage() {
             </div>
             <div className="card" style={{padding:12}}>
               <small style={{opacity:0.8}}>Rating</small>
-              <div>{(() => { const val = typeof movie.rating_average === 'number' ? movie.rating_average : parseFloat(movie.rating_average ?? '0'); return isNaN(val) ? 'N/A' : val.toFixed(1) })()}</div>
+              <div>
+                {(() => { const val = typeof movie.rating_average === 'number' ? movie.rating_average : parseFloat(movie.rating_average ?? '0'); return isNaN(val) ? 'N/A' : val.toFixed(1) })()} average
+                {summary ? ` • ${summary.count} review${summary.count === 1 ? '' : 's'}` : ''}
+              </div>
             </div>
           </div>
           <div style={{marginTop:16}}>
@@ -162,6 +245,51 @@ export default function MovieDetailsPage() {
                 </div>
               )
             })}
+          </div>
+          {/* Reviews Section */}
+          <div style={{marginTop:24}}>
+            <h3 style={{margin:'0 0 8px'}}>Reviews</h3>
+            {isAuthenticated ? (
+              <form onSubmit={submitReview} className="card" style={{padding:12, marginBottom:12}}>
+                <div style={{display:'grid', gridTemplateColumns:'120px 1fr', gap:12, alignItems:'center'}}>
+                  <label htmlFor="rating"><strong>Rating</strong></label>
+                  <select id="rating" value={draftRating} onChange={e => setDraftRating(parseInt(e.target.value))}>
+                    {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} ⭐</option>)}
+                  </select>
+                  <label htmlFor="title"><strong>Title</strong></label>
+                  <input id="title" value={draftTitle} onChange={e => setDraftTitle(e.target.value)} placeholder="Short headline" />
+                  <label htmlFor="content"><strong>Review</strong></label>
+                  <textarea id="content" value={draftContent} onChange={e => setDraftContent(e.target.value)} placeholder="Share your thoughts" rows={4} />
+                </div>
+                <div style={{marginTop:12, display:'flex', gap:8}}>
+                  <button type="submit" disabled={submitting} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>
+                    {myReview ? 'Update Review' : 'Post Review'}
+                  </button>
+                  {myReview && (
+                    <button type="button" disabled={submitting} onClick={deleteMyReview} style={{ backgroundColor: '#eee', color: '#333' }}>Delete</button>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <div className="card" style={{padding:12, marginBottom:12}}>
+                <div>Please log in to post a review.</div>
+              </div>
+            )}
+
+            {reviews.length === 0 && <div className="card" style={{padding:12}}>No reviews yet.</div>}
+            {reviews.map(rv => (
+              <div key={rv.id} className="card" style={{padding:12, marginBottom:8}}>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <strong>{rv.title || 'Untitled'}</strong>
+                  <span>{'⭐'.repeat(Math.max(1, Math.min(5, rv.rating)))}</span>
+                </div>
+                <small style={{opacity:0.8}}>
+                  by {rv.user_email || rv.user_name} • {new Date(rv.created_at).toLocaleString()}
+                  {rv.updated_at !== rv.created_at ? ` • edited ${new Date(rv.updated_at).toLocaleString()}` : ''}
+                </small>
+                <p style={{marginTop:8}}>{rv.content}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

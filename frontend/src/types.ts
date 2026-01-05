@@ -46,3 +46,23 @@ export interface Seat {
   status: SeatStatus
   is_available: boolean
 }
+
+export interface Review {
+  id: number
+  user: number
+  user_name: string
+  user_email: string
+  movie: number
+  movie_title: string
+  rating: number
+  title: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ReviewSummary {
+  movie_id: number
+  average_rating: number
+  count: number
+}
