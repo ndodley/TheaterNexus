@@ -38,6 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'accounts',
+    'movies',
+    'theaters',
+    'showtimes',
+    'orders',
+    'reviews',
 ]
 
 MIDDLEWARE = [
@@ -110,7 +119,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Use your local theater timezone so admin and API align
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
@@ -125,13 +135,59 @@ STATIC_URL = 'static/'
 # Frontend dev server CORS/CSRF configuration
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
+
+# Media files (uploaded images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Django REST Framework basic config
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    # Return decimals as numbers (floats) instead of strings
+    'COERCE_DECIMAL_TO_STRING': False,
+}
+
+# Minutes added to movie duration to calculate showtime end
+SHOWTIME_BUFFER_MINUTES = 15
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
+# SimpleJWT configuration (tweak durations as needed)
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# Stripe configuration (set these via environment variables in development)
+import os
+# Read from environment if set; otherwise use the explicit keys configured below.
+# NOTE: Do not pass the actual key string to os.environ.get — it returns None.
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY') or 'sk_test_51Skyy2GoXnzvIyIBwMbiMmJnqr77TCMhfKdB9okdRN5cgiphDsrcYbbSJtf5htWBzLcXQfApDI43a8jwdLdqfs3G00HZFZyIqF'
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY') or 'pk_test_51Skyy2GoXnzvIyIBmSz4KMWSsWNCDH8xVlLVVvfQV8IuCXPwL3SfLBXOG1s3jCosoZ2tBMJP5VK0nj7XikRVtHQY00Jzmkd1LG'
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
+# Cart/Orders defaults
+CART_HOLD_MINUTES = 10
+ORDER_CURRENCY = 'usd'
