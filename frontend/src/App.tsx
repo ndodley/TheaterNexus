@@ -14,6 +14,7 @@ import ConfirmationPage from './pages/Confirmation.tsx'
 import OrdersHistoryPage from './pages/OrdersHistory.tsx'
 import OrderDetailsPage from './pages/OrderDetails.tsx'
 import './index.css'
+import MyReviewsPage from './pages/MyReviews.tsx'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/orders/confirmation" element={<ConfirmationPage />} />
           <Route path="/orders" element={<OrdersHistoryPage />} />
           <Route path="/orders/:id" element={<OrderDetailsPage />} />
+          <Route path="/my-reviews" element={<MyReviewsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/employee" element={<EmployeeConsolePage />} />
