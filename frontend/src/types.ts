@@ -10,6 +10,7 @@ export interface Movie {
   title: string
   duration_minutes: number
   image?: string | null
+  image_url?: string | null
   plot_summary: string
   release_date?: string | null
   rating_average: number | string
