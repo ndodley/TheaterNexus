@@ -32,7 +32,7 @@ export default function OrdersHistoryPage() {
 
   return (
     <section className="container fade-in" style={{paddingTop:24, paddingBottom:24}}>
-      <h2 style={{marginTop:0}}>Your Orders</h2>
+      <h2 style={{marginTop:0}}>My Orders</h2>
       {orders.length === 0 ? (
         <div className="card">No orders yet. <Link to={'/showtimes'}>Find showtimes</Link></div>
       ) : (

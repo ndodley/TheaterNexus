@@ -58,7 +58,7 @@ export default function HomePage() {
                   {nowShowing.slice(0, 10).map(m => (
                     <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ display: 'block', padding: 0, overflow: 'hidden' }}>
                       {m.image && (
-                        <img src={imageUrl(m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
+                        <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
                       )}
                       <div style={{ padding: 10 }}>
                         <div style={{ fontWeight: 600 }}>{m.title}</div>
@@ -79,7 +79,7 @@ export default function HomePage() {
                   {comingSoon.slice(0, 10).map(m => (
                     <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ display: 'block', padding: 0, overflow: 'hidden' }}>
                       {m.image && (
-                        <img src={imageUrl(m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
+                        <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
                       )}
                       <div style={{ padding: 10 }}>
                         <div style={{ fontWeight: 600 }}>{m.title}</div>

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.conf import settings
 from .models import ShowTime
 from theaters.models import Seat
 
@@ -34,9 +35,17 @@ class ShowTimeSerializer(serializers.ModelSerializer):
     def get_movie_image(self, obj):
         try:
             img = getattr(obj.movie, 'image', None)
-            return img.url if img else None
+            if img:
+                name = getattr(img, 'name', '') or ''
+                if name.endswith('default_movie.jpg') and 'default_poster/' not in name:
+                    media = getattr(settings, 'MEDIA_URL', '/media/')
+                    return f"{media.rstrip('/')}/default_poster/default_movie.jpg"
+                return img.url
         except Exception:
-            return None
+            pass
+        # Fallback to default poster
+        media = getattr(settings, 'MEDIA_URL', '/media/')
+        return f"{media.rstrip('/')}/default_poster/default_movie.jpg"
 
 
 class SeatSerializer(serializers.ModelSerializer):

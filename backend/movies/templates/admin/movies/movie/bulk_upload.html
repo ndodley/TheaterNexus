@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+  <div class="container">
+    <h1>{% trans "Bulk upload movies" %}</h1>
+
+    <p>
+      {% trans "Upload a CSV file to create or update movies in bulk." %}
+      {% trans "Use the template to ensure correct headers and formats." %}
+    </p>
+    <p>
+      <a class="button" href="{% url 'admin:movies_movie_bulk_template' %}">{% trans "Download CSV template" %}</a>
+      <a class="button" href="..">{% trans "Back to list" %}</a>
+    </p>
+
+    <form method="post" action="" enctype="multipart/form-data" style="margin-top: 1rem;">
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="id_csv_file"><strong>{% trans "CSV file" %}</strong></label>
+        <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
+      </div>
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Preview CSV' %}" class="default">
+      </div>
+    </form>
+
+    <details style="margin-top:1rem;">
+      <summary><strong>{% trans "CSV Columns" %}</strong></summary>
+      <ul>
+        <li><code>title</code> – {% trans "required" %}</li>
+        <li><code>duration_minutes</code> – {% trans "required, positive integer" %}</li>
+        <li><code>plot_summary</code> – {% trans "optional" %}</li>
+        <li><code>release_date</code> – {% trans "optional, YYYY-MM-DD" %}</li>
+        <li><code>availability_status</code> – {% trans "COMING_SOON, NOW_SHOWING, or ENDED" %}</li>
+        <li><code>rating_average</code> – {% trans "optional, decimal" %}</li>
+        <li><code>genres</code> – {% trans "optional, comma-separated names (e.g., Action,Drama)" %}</li>
+        <li><code>image_url</code> – {% trans "optional, direct URL to an image (jpg/png). The admin will download and attach it." %}</li>
+      </ul>
+    </details>
+  </div>
+{% endblock %}

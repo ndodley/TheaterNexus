@@ -27,8 +27,8 @@ export default function MoviesPage() {
       <div className="grid">
         {movies.map(m => (
           <article key={m.id} className="card" style={{overflow:'hidden', transition: 'transform 180ms ease'}}>
-            {m.image && (
-              <img src={imageUrl(m.image)} alt={m.title} style={{width:'100%', height:180, objectFit:'cover', borderRadius:12}} />
+            {(m.image_url || m.image) && (
+              <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{width:'100%', height:180, objectFit:'cover', borderRadius:12}} />
             )}
             <div style={{paddingTop:12}}>
               <h3 style={{margin:'0 0 6px'}}>{m.title}</h3>

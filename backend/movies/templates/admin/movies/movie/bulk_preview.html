@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="container">
+    <h1>{% trans "Preview movies CSV" %}</h1>
+
+    <p>
+      {% trans "Review the rows below. Valid rows will be" %}
+      <strong>{% trans "created or updated" %}</strong> {% trans "as shown." %}
+    </p>
+
+    <ul>
+      <li>{% trans "Will create" %}: <strong>{{ will_create }}</strong></li>
+      <li>{% trans "Will update" %}: <strong>{{ will_update }}</strong></li>
+      <li>{% trans "Rows with errors" %}: <strong>{{ error_count }}</strong></li>
+    </ul>
+
+    <form method="post" style="margin-bottom: 1rem;">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1">
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Confirm Import' %}" class="default" {% if error_count > 0 %}disabled{% endif %}>
+        <a class="button" href=".">{% trans "Back to upload" %}</a>
+      </div>
+      {% if error_count > 0 %}
+        <p style="color:#b00;">{% trans "Fix the CSV and re-upload to proceed." %}</p>
+      {% endif %}
+    </form>
+
+    <div class="results">
+      <table class="listing">
+        <thead>
+          <tr>
+            <th>{% trans "Row" %}</th>
+            <th>{% trans "Action" %}</th>
+            <th>{% trans "Title" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "Release" %}</th>
+            <th>{% trans "Availability" %}</th>
+            <th>{% trans "Rating" %}</th>
+            <th>{% trans "Genres" %}</th>
+            <th>{% trans "Image URL" %}</th>
+            <th>{% trans "Errors" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            <tr>
+              <td>{{ r.row }}</td>
+              <td>
+                {% if r.action == 'create' %}
+                  <span style="color:green;">{% trans "Create" %}</span>
+                {% else %}
+                  <span style="color:#333;">{% trans "Update" %}</span>
+                {% endif %}
+              </td>
+              <td>{{ r.title }}</td>
+              <td>{{ r.duration_minutes }}</td>
+              <td>{{ r.release_date }}</td>
+              <td>{{ r.availability_status }}</td>
+              <td>{{ r.rating_average }}</td>
+              <td>{{ r.genres }}</td>
+              <td>
+                {% if r.image_url %}
+                  <a href="{{ r.image_url }}" target="_blank" rel="noopener">{% trans "Open" %}</a>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.errors %}
+                  <ul style="color:#b00;">
+                    {% for e in r.errors %}
+                      <li>{{ e }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
