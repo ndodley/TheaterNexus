@@ -46,6 +46,8 @@ export interface Seat {
   seat_type: SeatType
   status: SeatStatus
   is_available: boolean
+  is_paid?: boolean
+  is_held?: boolean
 }
 
 export interface Review {

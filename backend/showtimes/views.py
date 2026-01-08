@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import ShowTime
 from .serializers import ShowTimeSerializer, SeatSerializer
+from orders.models import Cart, CartItem, Order, OrderItem
 
 
 class ShowTimeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,7 +70,43 @@ class ShowTimeViewSet(viewsets.ReadOnlyModelViewSet):
 	def seats(self, request, pk=None):
 		showtime = self.get_object()
 		seats_qs = showtime.screen.seats.all().order_by('row', 'number')
-		data = SeatSerializer(seats_qs, many=True).data
+		# Compute unavailable seats: already paid or currently held (unexpired and active carts)
+		now = timezone.now()
+		if getattr(request, 'user', None) and request.user.is_authenticated:
+			paid_self_ids = set(
+				OrderItem.objects.filter(
+					showtime=showtime,
+					order__status=Order.STATUS_PAID,
+					order__user=request.user,
+				).values_list('seat_id', flat=True)
+			)
+			paid_other_ids = set(
+				OrderItem.objects.filter(
+					showtime=showtime,
+					order__status=Order.STATUS_PAID,
+				).exclude(order__user=request.user).values_list('seat_id', flat=True)
+			)
+		else:
+			paid_self_ids = set()
+			paid_other_ids = set(
+				OrderItem.objects.filter(
+					showtime=showtime,
+					order__status=Order.STATUS_PAID,
+				).values_list('seat_id', flat=True)
+			)
+		held_ids = set(
+			CartItem.objects.filter(
+				showtime=showtime,
+				hold_expires_at__gt=now,
+				cart__status=Cart.STATUS_ACTIVE,
+			).values_list('seat_id', flat=True)
+		)
+		ctx = {
+			'paid_self_seat_ids': paid_self_ids,
+			'paid_other_seat_ids': paid_other_ids,
+			'held_seat_ids': held_ids,
+		}
+		data = SeatSerializer(seats_qs, many=True, context=ctx).data
 		return Response({
 			'showtime': ShowTimeSerializer(showtime).data,
 			'seats': data,
