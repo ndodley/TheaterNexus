@@ -50,13 +50,37 @@ class ShowTimeSerializer(serializers.ModelSerializer):
 
 class SeatSerializer(serializers.ModelSerializer):
     is_available = serializers.SerializerMethodField()
+    is_paid = serializers.SerializerMethodField()
+    is_held = serializers.SerializerMethodField()
 
     class Meta:
         model = Seat
-        fields = ['id', 'row', 'number', 'seat_type', 'status', 'is_available']
+        fields = ['id', 'row', 'number', 'seat_type', 'status', 'is_available', 'is_paid', 'is_held']
 
     def get_is_available(self, obj):
         try:
+            ctx = getattr(self, 'context', {}) or {}
+            paid_self = ctx.get('paid_self_seat_ids') or set()
+            paid_other = ctx.get('paid_other_seat_ids') or set()
+            held = ctx.get('held_seat_ids') or set()
+            if obj.id in paid_self or obj.id in paid_other or obj.id in held:
+                return False
             return obj.status != Seat.SeatStatus.BLOCKED
         except Exception:
             return True
+
+    def get_is_paid(self, obj):
+        try:
+            ctx = getattr(self, 'context', {}) or {}
+            paid_self = ctx.get('paid_self_seat_ids') or set()
+            return obj.id in paid_self
+        except Exception:
+            return False
+
+    def get_is_held(self, obj):
+        try:
+            ctx = getattr(self, 'context', {}) or {}
+            held = ctx.get('held_seat_ids') or set()
+            return obj.id in held
+        except Exception:
+            return False

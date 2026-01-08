@@ -95,6 +95,7 @@ export default function SeatSelectionPage() {
           <div style={{marginTop:16}}>
             <div className="legend" style={{display:'flex', alignItems:'center', gap:12, marginBottom:10}}>
               <span className="legend-item"><span className="legend-swatch unavailable"></span><small>Unavailable</small></span>
+              <span className="legend-item"><span className="legend-swatch paid"></span><small>Paid</small></span>
               <span className="legend-item"><span className="legend-swatch available"></span><small>Available</small></span>
               <span className="legend-item"><span className="legend-swatch selected"></span><small>Selected</small></span>
             </div>
@@ -107,16 +108,18 @@ export default function SeatSelectionPage() {
                     {seats.map((seat: Seat) => {
                       const isSelected = selected.has(seat.id)
                       const isUnavailable = !seat.is_available
+                      const isPaid = !!seat.is_paid
                       const title = `${seat.row}${seat.number} • ${seat.seat_type}`
                       const classes = ['seat']
-                      if (isUnavailable) classes.push('is-unavailable')
+                      if (isPaid) classes.push('is-paid')
+                      else if (isUnavailable) classes.push('is-unavailable')
                       if (isSelected) classes.push('is-selected')
                       return (
                         <button
                           key={seat.id}
                           className={classes.join(' ')}
                           onClick={() => toggle(seat)}
-                          disabled={isUnavailable}
+                          disabled={isUnavailable || isPaid}
                           title={title}
                         />
                       )
