@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api, imageUrl } from '../api'
 import type { Movie, ShowTime, Review, ReviewSummary } from '../types'
 import { useAuth } from '../auth/AuthContext'
 
 export default function MovieDetailsPage() {
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [movie, setMovie] = useState<Movie | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -34,6 +35,19 @@ export default function MovieDetailsPage() {
     if (!id) return
     api.get(`/api/movies/${id}/`).then(res => setMovie(res.data)).catch(err => setError(err?.message ?? 'Failed to load'))
   }, [id])
+  async function toggleFavorite() {
+    if (!id || !movie) return
+    try {
+      if (movie.is_favorite) {
+        await api.delete(`/api/movies/${id}/favorite/`)
+      } else {
+        await api.post(`/api/movies/${id}/favorite/`)
+      }
+      setMovie({ ...movie, is_favorite: !movie.is_favorite })
+    } catch (err: any) {
+      if (err?.response?.status === 401) navigate('/login')
+    }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -146,39 +160,67 @@ export default function MovieDetailsPage() {
           <img src={imageUrl(movie.image_url || movie.image)} alt={movie.title} style={{width:'100%', height:360, objectFit:'cover', borderRadius:12}} />
         )}
         <div>
-          <h2 style={{marginTop:0}}>{movie.title}</h2>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <h2 style={{marginTop:0}}>{movie.title}</h2>
+            <button
+              className="btn btn-ghost"
+              title={movie.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              onClick={toggleFavorite}
+              aria-label={movie.is_favorite ? 'Unfavorite' : 'Favorite'}
+              style={{display:'flex', alignItems:'center', gap:6}}
+            >
+              <span role="img" aria-label="favorite">{movie.is_favorite ? '❤️' : '🤍'}</span>
+            </button>
+          </div>
           <p style={{opacity:0.9}}>{movie.plot_summary || 'No summary available.'}</p>
           <div style={{marginTop:12, display:'flex', gap:8, flexWrap:'wrap'}}>
             {movie.genres.map(g => <span key={g.id} className="badge">{g.name}</span>)}
           </div>
-          <div style={{marginTop:16, display:'grid', gridTemplateColumns:'repeat(2, minmax(0,1fr))', gap:12}}>
-            <div className="card" style={{padding:12}}>
-              <small style={{opacity:0.8}}>Duration</small>
-              <div>{movie.duration_minutes} min</div>
-            </div>
-            <div className="card" style={{padding:12}}>
-              <small style={{opacity:0.8}}>Release Date</small>
-              <div>{movie.release_date || 'TBA'}</div>
-            </div>
-            <div className="card" style={{padding:12}}>
-              <small style={{opacity:0.8}}>Availability</small>
-              <div>{movie.availability_status.replace('_',' ')}</div>
-            </div>
-            <div className="card" style={{padding:12}}>
-              <small style={{opacity:0.8}}>Rating</small>
-              <div>
-                {(() => { const val = typeof movie.rating_average === 'number' ? movie.rating_average : parseFloat(movie.rating_average ?? '0'); return isNaN(val) ? 'N/A' : val.toFixed(1) })()} average
-                {summary ? ` • ${summary.count} review${summary.count === 1 ? '' : 's'}` : ''}
+          {(() => {
+            const ratingVal = (() => { const v = typeof movie.rating_average === 'number' ? movie.rating_average : parseFloat(movie.rating_average ?? '0'); return isNaN(v) ? null : v })()
+            const releaseStr = movie.release_date ? (() => { const d = new Date(String(movie.release_date)); return isNaN(d.getTime()) ? movie.release_date : d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) })() : 'TBA'
+            const availability = (movie.availability_status || '').replace(/_/g, ' ')
+            return (
+              <div className="kv-grid" style={{marginTop:16}}>
+                <div className="kv-item">
+                  <span className="kv-icon" aria-hidden>⏱️</span>
+                  <div className="kv-content">
+                    <small className="kv-label">Duration</small>
+                    <div className="kv-value">{movie.duration_minutes} min</div>
+                  </div>
+                </div>
+                <div className="kv-item">
+                  <span className="kv-icon" aria-hidden>📅</span>
+                  <div className="kv-content">
+                    <small className="kv-label">Release Date</small>
+                    <div className="kv-value">{releaseStr}</div>
+                  </div>
+                </div>
+                <div className="kv-item">
+                  <span className="kv-icon" aria-hidden>🎬</span>
+                  <div className="kv-content">
+                    <small className="kv-label">Availability</small>
+                    <div className="kv-value" style={{textTransform:'capitalize'}}>{availability || '—'}</div>
+                  </div>
+                </div>
+                <div className="kv-item">
+                  <span className="kv-icon" aria-hidden>⭐</span>
+                  <div className="kv-content">
+                    <small className="kv-label">Rating</small>
+                    <div className="kv-value">{ratingVal === null ? 'N/A' : ratingVal.toFixed(1)}{summary ? ` • ${summary.count} review${summary.count === 1 ? '' : 's'}` : ''}</div>
+                  </div>
+                </div>
+                <div className="kv-item">
+                  <span className="kv-icon" aria-hidden>🔞</span>
+                  <div className="kv-content">
+                    <small className="kv-label">MPA Rating</small>
+                    <div className="kv-value">{movie.mpa_rating || 'N/A'}</div>
+                    {movie.mpa_rating_label ? <small className="kv-label">{movie.mpa_rating_label}</small> : null}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="card" style={{padding:12}}>
-              <small style={{opacity:0.8}}>MPA Rating</small>
-              <div>
-                {movie.mpa_rating || 'N/A'}
-                {movie.mpa_rating_label ? <div style={{opacity:0.8, fontSize:12}}>{movie.mpa_rating_label}</div> : null}
-              </div>
-            </div>
-          </div>
+            )
+          })()}
           <div style={{marginTop:16}}>
             <Link to="/movies"><button style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Back to Movies</button></Link>
           </div>

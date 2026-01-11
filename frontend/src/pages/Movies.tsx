@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, imageUrl } from '../api'
 import type { Movie, Genre, Availability } from '../types'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function MoviesPage() {
+  const navigate = useNavigate()
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,17 +19,17 @@ export default function MoviesPage() {
   const [ratingMin, setRatingMin] = useState<string>('')
   const [ratingMax, setRatingMax] = useState<string>('')
   const [hasPoster, setHasPoster] = useState<boolean>(false)
-  const [sortField, setSortField] = useState<string>('release_date')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(true)
-  const [openStatus, setOpenStatus] = useState<boolean>(true)
-  const [openGenres, setOpenGenres] = useState<boolean>(true)
+  const [sortField, setSortField] = useState<string>('title')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false)
+  const [openStatus, setOpenStatus] = useState<boolean>(false)
+  const [openGenres, setOpenGenres] = useState<boolean>(false)
   // Advanced collapsible blocks
-  const [openSort, setOpenSort] = useState<boolean>(true)
-  const [openOrder, setOpenOrder] = useState<boolean>(true)
-  const [openDuration, setOpenDuration] = useState<boolean>(true)
-  const [openRating, setOpenRating] = useState<boolean>(true)
-  const [openMpa, setOpenMpa] = useState<boolean>(true)
+  const [openSort, setOpenSort] = useState<boolean>(false)
+  const [openOrder, setOpenOrder] = useState<boolean>(false)
+  const [openDuration, setOpenDuration] = useState<boolean>(false)
+  const [openRating, setOpenRating] = useState<boolean>(false)
+  const [openMpa, setOpenMpa] = useState<boolean>(false)
   const [mpa, setMpa] = useState<''|'G'|'PG'|'PG-13'|'R'|'NC-17'>('')
 
 
@@ -73,6 +74,25 @@ export default function MoviesPage() {
 
   // Derived: movies filtered by MPA (client-side)
   const filteredMovies = useMemo(() => movies.filter(m => !mpa || m.mpa_rating === mpa), [movies, mpa])
+
+  const toggleFavorite = async (movieId: number, isFav?: boolean) => {
+    try {
+      if (isFav) {
+        try {
+          await api.delete(`/api/movies/${movieId}/favorite/`)
+        } catch (err: any) {
+          // Fallback for environments where DELETE is blocked
+          await api.post(`/api/movies/${movieId}/unfavorite/`)
+        }
+      } else {
+        await api.post(`/api/movies/${movieId}/favorite/`)
+      }
+      setMovies(prev => prev.map(m => m.id === movieId ? { ...m, is_favorite: !isFav } : m))
+    } catch (err: any) {
+      if (err?.response?.status === 401) navigate('/login')
+      // else ignore silently
+    }
+  }
 
   
 
@@ -325,7 +345,18 @@ export default function MoviesPage() {
               <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{width:'100%', height:180, objectFit:'cover', borderRadius:12}} />
             )}
             <div style={{paddingTop:12}}>
-              <h3 style={{margin:'0 0 6px'}}>{m.title}</h3>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <h3 style={{margin:'0 0 6px'}}>{m.title}</h3>
+                <button
+                  className="btn btn-ghost"
+                  title={m.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(m.id, m.is_favorite) }}
+                  aria-label={m.is_favorite ? 'Unfavorite' : 'Favorite'}
+                  style={{display:'flex', alignItems:'center', gap:6}}
+                >
+                  <span role="img" aria-label="favorite">{m.is_favorite ? '❤️' : '🤍'}</span>
+                </button>
+              </div>
               <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
                 {m.genres.map(g => <span className="badge" key={g.id}>{g.name}</span>)}
               </div>

@@ -7,6 +7,8 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -17,12 +19,26 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "phone_number",
             "avatar",
+            "avatar_url",
             "date_of_birth",
             "role",
             "is_staff",
             "is_superuser",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
+
+    def get_avatar_url(self, obj: User):
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        try:
+            if obj.avatar:
+                url = obj.avatar.url
+            else:
+                from django.conf import settings
+                media = getattr(settings, 'MEDIA_URL', '/media/')
+                url = f"{media.rstrip('/')}/default_poster/default_avatar.jpg"
+            return request.build_absolute_uri(url) if (request and url and url.startswith('/')) else url
+        except Exception:
+            return None
 
 
 class RegisterSerializer(serializers.ModelSerializer):

@@ -19,9 +19,10 @@ export default function TheaterShowtimesPage() {
   const [order, setOrder] = useState<'asc'|'desc'>('asc')
   const [timeRange, setTimeRange] = useState<'any'|'morning'|'afternoon'|'evening'>('any')
   const [mpa, setMpa] = useState<''|'G'|'PG'|'PG-13'|'R'|'NC-17'>('')
-  const [openSort, setOpenSort] = useState(true)
-  const [openTime, setOpenTime] = useState(true)
-  const [openMpa, setOpenMpa] = useState(true)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
+  const [openSort, setOpenSort] = useState(false)
+  const [openTime, setOpenTime] = useState(false)
+  const [openMpa, setOpenMpa] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date()
     const pad = (n: number) => String(n).padStart(2, '0')
@@ -55,6 +56,32 @@ export default function TheaterShowtimesPage() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [theaterId, selectedDate, upcoming, timeRange])
+
+  useEffect(() => {
+    let active = true
+    api.get('/api/movies/', { params: { favorited: 'true', ordering: 'title' } })
+      .then(res => { if (active) setFavoriteIds(new Set((res.data || []).map((m: any) => m.id))) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
+
+  async function toggleFavorite(movieId: number) {
+    try {
+      if (favoriteIds.has(movieId)) {
+        try {
+          await api.delete(`/api/movies/${movieId}/favorite/`)
+        } catch (err: any) {
+          await api.post(`/api/movies/${movieId}/unfavorite/`)
+        }
+        setFavoriteIds(prev => { const next = new Set(prev); next.delete(movieId); return next })
+      } else {
+        await api.post(`/api/movies/${movieId}/favorite/`)
+        setFavoriteIds(prev => { const next = new Set(prev); next.add(movieId); return next })
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 401) navigate('/login')
+    }
+  }
 
   // Group by movie for the selected date
   const groupedByMovie = useMemo(() => {
@@ -217,8 +244,17 @@ export default function TheaterShowtimesPage() {
               )}
             </div>
             <div>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                 <h3 style={{margin:0}}>{mv.title}</h3>
+                <button
+                  className="btn btn-ghost"
+                  title={favoriteIds.has(movieId) ? 'Remove from Favorites' : 'Add to Favorites'}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(movieId) }}
+                  aria-label={favoriteIds.has(movieId) ? 'Unfavorite' : 'Favorite'}
+                  style={{display:'flex', alignItems:'center', gap:6}}
+                >
+                  <span role="img" aria-label="favorite">{favoriteIds.has(movieId) ? '❤️' : '🤍'}</span>
+                </button>
               </div>
               <div style={{marginTop:6, display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
                 {(() => {
