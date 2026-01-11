@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import Genre, Movie
+from .models import Genre, Movie, Favorite
 from .serializers import GenreSerializer, MovieSerializer
 
 
@@ -12,7 +12,6 @@ class GenreViewSet(viewsets.ModelViewSet):
 	serializer_class = GenreSerializer
 	http_method_names = ["get", "post", "head", "options"]
 	permission_classes = [AllowAny]
-	authentication_classes = []
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -24,7 +23,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 	ordering_fields = ["release_date", "rating_average", "title", "duration_minutes", "created_at"]
 	ordering = ["-release_date", "title"]
 	permission_classes = [AllowAny]
-	authentication_classes = []
 
 	def get_queryset(self):
 		qs = super().get_queryset()
@@ -115,6 +113,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 		if has_poster in {"1", "true", "True", "yes"}:
 			qs = qs.exclude(image__isnull=True).exclude(image="default_poster/default_movie.jpg")
 
+		# Favorited filter for current user: ?favorited=true
+		favorited = params.get("favorited")
+		user = getattr(self.request, "user", None)
+		if favorited in {"1", "true", "True", "yes"} and user and getattr(user, "is_authenticated", False):
+			qs = qs.filter(favorited_by__user=user)
+
 		# If we filtered by M2M, avoid duplicates
 		return qs.distinct()
 
@@ -122,4 +126,26 @@ class MovieViewSet(viewsets.ModelViewSet):
 	def now_showing(self, request):
 		qs = self.get_queryset().filter(availability_status=Movie.Availability.NOW_SHOWING)
 		return Response(self.get_serializer(qs, many=True).data)
+
+	@action(detail=True, methods=["post", "delete"], url_path="favorite")
+	def favorite(self, request, pk=None):
+		user = getattr(request, "user", None)
+		if not user or not getattr(user, "is_authenticated", False):
+			return Response({"detail": "Authentication required"}, status=401)
+		movie = self.get_object()
+		if request.method.lower() == "delete":
+			Favorite.objects.filter(user=user, movie=movie).delete()
+			return Response({"status": "unfavorited"})
+		else:
+			Favorite.objects.get_or_create(user=user, movie=movie)
+			return Response({"status": "favorited"})
+
+	@action(detail=True, methods=["post"], url_path="unfavorite")
+	def unfavorite_post(self, request, pk=None):
+		user = getattr(request, "user", None)
+		if not user or not getattr(user, "is_authenticated", False):
+			return Response({"detail": "Authentication required"}, status=401)
+		movie = self.get_object()
+		Favorite.objects.filter(user=user, movie=movie).delete()
+		return Response({"status": "unfavorited"})
         

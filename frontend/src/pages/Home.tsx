@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, imageUrl } from '../api'
 import type { Movie } from '../types'
 
-export default function HomePage() {
+function HomePage() {
+  const navigate = useNavigate()
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +21,23 @@ export default function HomePage() {
 
   const nowShowing = movies.filter(m => (m.availability_status || '').toLowerCase() === 'now_showing')
   const comingSoon = movies.filter(m => (m.availability_status || '').toLowerCase() === 'coming_soon')
+
+  const toggleFavorite = async (movieId: number, isFav?: boolean) => {
+    try {
+      if (isFav) {
+        try {
+          await api.delete(`/api/movies/${movieId}/favorite/`)
+        } catch (err: any) {
+          await api.post(`/api/movies/${movieId}/unfavorite/`)
+        }
+      } else {
+        await api.post(`/api/movies/${movieId}/favorite/`)
+      }
+      setMovies(prev => prev.map(m => m.id === movieId ? { ...m, is_favorite: !isFav } : m))
+    } catch (err: any) {
+      if (err?.response?.status === 401) navigate('/login')
+    }
+  }
 
   return (
     <div>
@@ -61,7 +79,18 @@ export default function HomePage() {
                         <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
                       )}
                       <div style={{ padding: 10 }}>
-                        <div style={{ fontWeight: 600 }}>{m.title}</div>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                          <div style={{ fontWeight: 600 }}>{m.title}</div>
+                          <button
+                            className="btn btn-ghost"
+                            title={m.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(m.id, m.is_favorite) }}
+                            aria-label={m.is_favorite ? 'Unfavorite' : 'Favorite'}
+                            style={{display:'flex', alignItems:'center', gap:6}}
+                          >
+                            <span role="img" aria-label="favorite">{m.is_favorite ? '❤️' : '🤍'}</span>
+                          </button>
+                        </div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                           {m.genres.slice(0, 2).map(g => <span key={g.id} className="badge">{g.name}</span>)}
                         </div>
@@ -82,7 +111,18 @@ export default function HomePage() {
                         <img src={imageUrl(m.image_url || m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
                       )}
                       <div style={{ padding: 10 }}>
-                        <div style={{ fontWeight: 600 }}>{m.title}</div>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                          <div style={{ fontWeight: 600 }}>{m.title}</div>
+                          <button
+                            className="btn btn-ghost"
+                            title={m.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(m.id, m.is_favorite) }}
+                            aria-label={m.is_favorite ? 'Unfavorite' : 'Favorite'}
+                            style={{display:'flex', alignItems:'center', gap:6}}
+                          >
+                            <span role="img" aria-label="favorite">{m.is_favorite ? '❤️' : '🤍'}</span>
+                          </button>
+                        </div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                           {m.genres.slice(0, 2).map(g => <span key={g.id} className="badge">{g.name}</span>)}
                         </div>
@@ -98,3 +138,5 @@ export default function HomePage() {
     </div>
   )
 }
+
+export default HomePage

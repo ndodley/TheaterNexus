@@ -17,6 +17,8 @@ import OrdersHistoryPage from './pages/OrdersHistory.tsx'
 import OrderDetailsPage from './pages/OrderDetails.tsx'
 import './index.css'
 import MyReviewsPage from './pages/MyReviews.tsx'
+import ProfilePage from './pages/Profile.tsx'
+import FavoritesPage from './pages/Favorites.tsx'
 
 export default function App() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
           <Route path="/orders" element={<OrdersHistoryPage />} />
           <Route path="/orders/:id" element={<OrderDetailsPage />} />
           <Route path="/my-reviews" element={<MyReviewsPage />} />
+          <Route path="/my-favorites" element={<FavoritesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/employee" element={<EmployeeConsolePage />} />

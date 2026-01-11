@@ -16,6 +16,7 @@ export interface Movie {
   rating_average: number | string
   mpa_rating?: string | null
   mpa_rating_label?: string | null
+  is_favorite?: boolean
   availability_status: Availability
   genres: Genre[]
 }

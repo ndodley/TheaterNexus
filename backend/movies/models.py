@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Genre(models.Model):
@@ -96,4 +97,15 @@ class Movie(models.Model):
 			# Silently ignore storage errors; deletion of DB record should not fail
 			pass
 
-# Create your models here.
+
+class Favorite(models.Model):
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="favorites")
+	movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="favorited_by")
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		unique_together = ("user", "movie")
+		ordering = ["-created_at"]
+
+	def __str__(self) -> str:
+		return f"Favorite(user={self.user_id}, movie={self.movie_id})"

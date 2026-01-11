@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.conf import settings
-from .models import Genre, Movie
+from .models import Genre, Movie, Favorite
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -13,6 +13,7 @@ class MovieSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     image_url = serializers.SerializerMethodField()
     mpa_rating_label = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -27,6 +28,7 @@ class MovieSerializer(serializers.ModelSerializer):
             "rating_average",
             "mpa_rating",
             "mpa_rating_label",
+            "is_favorite",
             "availability_status",
             "genres",
         ]
@@ -56,3 +58,13 @@ class MovieSerializer(serializers.ModelSerializer):
             return obj.get_mpa_rating_display() if obj.mpa_rating else None
         except Exception:
             return None
+
+    def get_is_favorite(self, obj: Movie):
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        user = getattr(request, 'user', None)
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        try:
+            return Favorite.objects.filter(user=user, movie=obj).exists()
+        except Exception:
+            return False

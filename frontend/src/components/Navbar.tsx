@@ -1,33 +1,56 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle.tsx'
 import { useAuth, adminUrl } from '../auth/AuthContext.tsx'
+import { useEffect, useRef, useState } from 'react'
+import { imageUrl } from '../api.ts'
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   const onLogout = async () => {
     await logout()
     navigate('/')
   }
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const onDocPointerDown = (e: PointerEvent) => {
+      if (!menuRef.current) return
+      if (isAccountOpen && !menuRef.current.contains(e.target as Node)) {
+        setIsAccountOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', onDocPointerDown)
+    return () => document.removeEventListener('pointerdown', onDocPointerDown)
+  }, [isAccountOpen])
+
   return (
     <nav className="nav" style={{ background: 'var(--nav-bg)' }}>
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="MP2 Home">MP2 Tickets</Link>
-          <NavLink to="/movies" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Movies</NavLink>
-          <NavLink to="/showtimes" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Showtimes</NavLink>
-          <NavLink to="/theaters" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Theaters</NavLink>
-          <NavLink to="/orders" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>My Orders</NavLink>
-          <NavLink to="/my-reviews" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>My Reviews</NavLink>
+          <div className="nav-links">
+            <NavLink to="/movies" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <span className="mi-icon" aria-hidden>🎬</span><span>Movies</span>
+            </NavLink>
+            <NavLink to="/showtimes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <span className="mi-icon" aria-hidden>🕒</span><span>Showtimes</span>
+            </NavLink>
+            <NavLink to="/theaters" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <span className="mi-icon" aria-hidden>🎟️</span><span>Theaters</span>
+            </NavLink>
+          </div>
+
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {user?.role === 'admin' && (
-            <a href={adminUrl()} target="_blank" rel="noreferrer" style={{ color: 'var(--nav-text)', fontWeight: 600 }}>Admin</a>
+            <a href={adminUrl()} target="_blank" rel="noreferrer" className="nav-link">Admin</a>
           )}
           {user?.role === 'employee' && (
-            <NavLink to="/employee" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Console</NavLink>
+            <NavLink to="/employee" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Console</NavLink>
           )}
           {!isAuthenticated ? (
             <>
@@ -37,21 +60,55 @@ export default function Navbar() {
           ) : (
             user && (
               <>
-                <NavLink to="/cart" className="btn btn-ghost" title="Cart" style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span role="img" aria-label="Cart">🛒</span>
-                  <span>Cart</span>
+                <NavLink to="/cart" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} cart-link`} title="Cart">
+                  <span className="mi-icon" aria-hidden>🛒</span><span>Cart</span>
                 </NavLink>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--primary-200)', display: 'grid', placeItems: 'center', color: '#000', fontWeight: 700 }}>
-                      {(user.first_name?.[0] || user.username[0]).toUpperCase()}
+                <div ref={menuRef} className="account-menu" style={{ position:'relative', zIndex: 10000 }}>
+                  <button
+                    className="account-toggle"
+                    aria-haspopup="menu"
+                    aria-expanded={isAccountOpen}
+                    onClick={() => setIsAccountOpen(v => !v)}
+                    title="My Account"
+                    style={{ display:'inline-flex', alignItems:'center', gap:10 }}
+                  >
+                    {(() => {
+                      const avatarSrc = user?.avatar_url ? imageUrl(user.avatar_url) : (user?.avatar ? imageUrl(user.avatar) : imageUrl('/media/default_poster/default_avatar.jpg'))
+                      return (
+                        <img src={avatarSrc} alt={user?.username || ''} style={{ width:28, height:28, borderRadius:'50%', objectFit:'cover', boxShadow:'var(--shadow)' }} />
+                      )
+                    })()}
+                    <span style={{ color:'var(--nav-text)', fontWeight:700 }}>{user.first_name || user.username}</span>
+                    <span className="caret" aria-hidden>▾</span>
+                  </button>
+                  {isAccountOpen && (
+                    <div
+                      role="menu"
+                      className="account-dropdown slide-up"
+                      style={{ position:'absolute', right:0, top:'calc(100% + 8px)', minWidth:220 }}
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <div className="menu-group">
+                        <button role="menuitem" className="menu-item" onClick={() => { setIsAccountOpen(false); navigate('/profile') }}>
+                          <span className="mi-icon" aria-hidden>👤</span><span>Profile</span>
+                        </button>
+                        <button role="menuitem" className="menu-item" onClick={() => { setIsAccountOpen(false); navigate('/orders') }}>
+                          <span className="mi-icon" aria-hidden>📦</span><span>My Orders</span>
+                        </button>
+                        <button role="menuitem" className="menu-item" onClick={() => { setIsAccountOpen(false); navigate('/my-reviews') }}>
+                          <span className="mi-icon" aria-hidden>✍️</span><span>My Reviews</span>
+                        </button>
+                        <button role="menuitem" className="menu-item" onClick={() => { setIsAccountOpen(false); navigate('/my-favorites') }}>
+                          <span className="mi-icon" aria-hidden>❤️</span><span>My Favorites</span>
+                        </button>
+                      </div>
+                      <div className="menu-divider" />
+                      <button role="menuitem" className="menu-item" onClick={onLogout}>
+                        <span className="mi-icon" aria-hidden>🚪</span><span>Logout</span>
+                      </button>
                     </div>
-                    <span style={{ color: 'var(--nav-text)', fontWeight: 600 }}>{user.first_name || user.username}</span>
-                    {user.role && (
-                      <span className="chip" style={{ marginLeft: 4 }}>{user.role}</span>
-                    )}
-                  </div>
-                  <button className="btn btn-ghost" onClick={onLogout}>Logout</button>
+                  )}
                 </div>
                 <ThemeToggle />
               </>

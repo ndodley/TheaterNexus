@@ -51,3 +51,46 @@ class LogoutView(APIView):
 			return Response({"detail": "Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
 		return Response({"detail": "Logged out"}, status=status.HTTP_205_RESET_CONTENT)
 
+
+class AvatarView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def post(self, request):
+		return self.put(request)
+
+	def put(self, request):
+		user = request.user
+		file = request.FILES.get('avatar')
+		if not file:
+			return Response({"detail": "Missing avatar file"}, status=status.HTTP_400_BAD_REQUEST)
+		# Delete previous file if exists and different
+		prev_name = None
+		try:
+			prev_name = user.avatar.name if user.avatar else None
+		except Exception:
+			prev_name = None
+		user.avatar = file
+		user.save()
+		try:
+			if prev_name and prev_name != (user.avatar.name if user.avatar else None):
+				user.avatar.storage.delete(prev_name)
+		except Exception:
+			pass
+		return Response(UserSerializer(user, context={'request': request}).data)
+
+	def delete(self, request):
+		user = request.user
+		prev_name = None
+		try:
+			prev_name = user.avatar.name if user.avatar else None
+		except Exception:
+			prev_name = None
+		user.avatar = None
+		user.save()
+		try:
+			if prev_name:
+				user.avatar.storage.delete(prev_name)
+		except Exception:
+			pass
+		return Response(UserSerializer(user, context={'request': request}).data)
+

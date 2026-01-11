@@ -39,7 +39,7 @@ class User(AbstractUser):
 	)
 
 	phone_number = models.CharField(max_length=20, blank=True)
-	avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+	avatar = models.ImageField(upload_to='user_pics/', null=True, blank=True)
 	date_of_birth = models.DateField(null=True, blank=True)
 
 	# Use custom manager so CLI createsuperuser sets role=admin
