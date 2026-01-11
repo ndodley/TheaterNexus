@@ -34,6 +34,7 @@ class ScreenSerializer(serializers.ModelSerializer):
 
 
 class TheaterSerializer(serializers.ModelSerializer):
+    screen_count = serializers.SerializerMethodField()
     screens = ScreenSerializer(many=True, read_only=True)
 
     class Meta:
@@ -41,6 +42,14 @@ class TheaterSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "address",
             "is_active",
+            "screen_count",
             "screens",
         ]
+
+    def get_screen_count(self, obj):
+        try:
+            return obj.screens.count()
+        except Exception:
+            return 0

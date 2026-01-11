@@ -17,12 +17,26 @@ class Movie(models.Model):
 		NOW_SHOWING = "NOW_SHOWING", "Now Showing"
 		ENDED = "ENDED", "Ended"
 
+	class MpaRating(models.TextChoices):
+		G = "G", "G (General Audiences)"
+		PG = "PG", "PG (Parental Guidance Suggested)"
+		PG_13 = "PG-13", "PG-13 (Parents Strongly Cautioned)"
+		R = "R", "R (Restricted)"
+		NC_17 = "NC-17", "NC-17 (Adults Only)"
+
 	title = models.CharField(max_length=255)
 	duration_minutes = models.PositiveSmallIntegerField()
 	image = models.ImageField(upload_to="movie_posters/", blank=True, null=True)
 	plot_summary = models.TextField(blank=True)
 	release_date = models.DateField(blank=True, null=True)
 	rating_average = models.DecimalField(max_digits=3, decimal_places=1, default=0)
+	mpa_rating = models.CharField(
+		max_length=6,
+		choices=MpaRating.choices,
+		blank=True,
+		null=True,
+		help_text="MPA rating (e.g., G, PG, PG-13, R, NC-17)",
+	)
 	availability_status = models.CharField(
 		max_length=20,
 		choices=Availability.choices,

@@ -7,6 +7,8 @@ import HomePage from './pages/Home.tsx'
 import MoviesPage from './pages/Movies.tsx'
 import MovieDetailsPage from './pages/MovieDetails.tsx'
 import ShowtimesPage from './pages/Showtimes.tsx'
+import TheatersPage from './pages/Theaters.tsx'
+import TheaterShowtimesPage from './pages/TheaterShowtimes.tsx'
 import SeatSelectionPage from './pages/SeatSelection.tsx'
 import CartPage from './pages/Cart.tsx'
 import CheckoutPage from './pages/Checkout.tsx'
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="/movies" element={<MoviesPage />} />
           <Route path="/movies/:id" element={<MovieDetailsPage />} />
           <Route path="/showtimes" element={<ShowtimesPage />} />
+          <Route path="/theaters" element={<TheatersPage />} />
+          <Route path="/theaters/:id/showtimes" element={<TheaterShowtimesPage />} />
           <Route path="/showtimes/:id/seats" element={<SeatSelectionPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />

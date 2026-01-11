@@ -18,6 +18,7 @@ export default function Navbar() {
           <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="MP2 Home">MP2 Tickets</Link>
           <NavLink to="/movies" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Movies</NavLink>
           <NavLink to="/showtimes" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Showtimes</NavLink>
+          <NavLink to="/theaters" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>Theaters</NavLink>
           <NavLink to="/orders" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>My Orders</NavLink>
           <NavLink to="/my-reviews" style={({ isActive }) => ({ color: isActive ? 'var(--primary-300)' : 'var(--nav-text)', fontWeight: 600 })}>My Reviews</NavLink>
         </div>

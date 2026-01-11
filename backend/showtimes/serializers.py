@@ -2,22 +2,32 @@ from rest_framework import serializers
 from django.conf import settings
 from .models import ShowTime
 from theaters.models import Seat
+from orders.models import Cart, CartItem, Order, OrderItem
+from django.utils import timezone
 
 
 class ShowTimeSerializer(serializers.ModelSerializer):
     theater = serializers.SerializerMethodField()
     theater_name = serializers.SerializerMethodField()
+    theater_address = serializers.SerializerMethodField()
     screen_name = serializers.SerializerMethodField()
     movie_title = serializers.SerializerMethodField()
     movie_image = serializers.SerializerMethodField()
+    movie_duration_minutes = serializers.SerializerMethodField()
+    movie_rating_average = serializers.SerializerMethodField()
+    movie_mpa_rating = serializers.SerializerMethodField()
+    movie_mpa_rating_label = serializers.SerializerMethodField()
     seat_count = serializers.IntegerField(read_only=True)
+    available_seat_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ShowTime
         fields = [
-            'id', 'movie', 'movie_title', 'movie_image', 'screen', 'screen_name', 'theater', 'theater_name',
+            'id', 'movie', 'movie_title', 'movie_image', 'movie_duration_minutes', 'movie_rating_average',
+            'movie_mpa_rating', 'movie_mpa_rating_label',
+            'screen', 'screen_name', 'theater', 'theater_name', 'theater_address',
             'start_time', 'end_time', 'base_price', 'status',
-            'seat_count',
+            'seat_count', 'available_seat_count',
         ]
 
     def get_theater(self, obj):
@@ -25,6 +35,12 @@ class ShowTimeSerializer(serializers.ModelSerializer):
 
     def get_theater_name(self, obj):
         return obj.screen.theater.name
+
+    def get_theater_address(self, obj):
+        try:
+            return getattr(obj.screen.theater, 'address', '')
+        except Exception:
+            return ''
 
     def get_screen_name(self, obj):
         return obj.screen.name
@@ -46,6 +62,66 @@ class ShowTimeSerializer(serializers.ModelSerializer):
         # Fallback to default poster
         media = getattr(settings, 'MEDIA_URL', '/media/')
         return f"{media.rstrip('/')}/default_poster/default_movie.jpg"
+
+    def get_movie_duration_minutes(self, obj):
+        try:
+            return int(getattr(obj.movie, 'duration_minutes', 0) or 0)
+        except Exception:
+            return 0
+
+    def get_movie_rating_average(self, obj):
+        try:
+            return getattr(obj.movie, 'rating_average', 0)
+        except Exception:
+            return 0
+
+    def get_movie_mpa_rating(self, obj):
+        try:
+            return getattr(obj.movie, 'mpa_rating', None)
+        except Exception:
+            return None
+
+    def get_movie_mpa_rating_label(self, obj):
+        try:
+            # If the movie has the choice set, Django provides get_FOO_display
+            return obj.movie.get_mpa_rating_display() if getattr(obj.movie, 'mpa_rating', None) else None
+        except Exception:
+            return None
+
+    def get_available_seat_count(self, obj):
+        try:
+            # Total selectable seats are those on the screen that are not BLOCKED
+            seats_qs = obj.screen.seats.all()
+            blocked_ids = set(seats_qs.filter(status=Seat.SeatStatus.BLOCKED).values_list('id', flat=True))
+
+            # Paid seats
+            paid_ids = set(
+                OrderItem.objects.filter(
+                    showtime=obj,
+                    order__status=Order.STATUS_PAID,
+                ).values_list('seat_id', flat=True)
+            )
+
+            # Held seats (active carts, not expired)
+            now = timezone.now()
+            held_ids = set(
+                CartItem.objects.filter(
+                    showtime=obj,
+                    hold_expires_at__gt=now,
+                    cart__status=Cart.STATUS_ACTIVE,
+                ).values_list('seat_id', flat=True)
+            )
+
+            unavailable = blocked_ids.union(paid_ids).union(held_ids)
+            # Available = seats with status AVAILABLE and not in unavailable set
+            available_count = seats_qs.exclude(id__in=list(unavailable)).filter(status=Seat.SeatStatus.AVAILABLE).count()
+            return int(available_count)
+        except Exception:
+            # Fallback to seat_count if anything goes wrong
+            try:
+                return int(getattr(obj, 'seat_count', 0) or 0)
+            except Exception:
+                return 0
 
 
 class SeatSerializer(serializers.ModelSerializer):
