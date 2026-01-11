@@ -171,6 +171,13 @@ export default function MovieDetailsPage() {
                 {summary ? ` • ${summary.count} review${summary.count === 1 ? '' : 's'}` : ''}
               </div>
             </div>
+            <div className="card" style={{padding:12}}>
+              <small style={{opacity:0.8}}>MPA Rating</small>
+              <div>
+                {movie.mpa_rating || 'N/A'}
+                {movie.mpa_rating_label ? <div style={{opacity:0.8, fontSize:12}}>{movie.mpa_rating_label}</div> : null}
+              </div>
+            </div>
           </div>
           <div style={{marginTop:16}}>
             <Link to="/movies"><button style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Back to Movies</button></Link>

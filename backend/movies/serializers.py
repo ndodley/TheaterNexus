@@ -12,6 +12,7 @@ class GenreSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     image_url = serializers.SerializerMethodField()
+    mpa_rating_label = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -24,6 +25,8 @@ class MovieSerializer(serializers.ModelSerializer):
             "plot_summary",
             "release_date",
             "rating_average",
+            "mpa_rating",
+            "mpa_rating_label",
             "availability_status",
             "genres",
         ]
@@ -46,3 +49,10 @@ class MovieSerializer(serializers.ModelSerializer):
         if not url and getattr(settings, 'MEDIA_URL', None):
             url = f"{settings.MEDIA_URL.rstrip('/')}/default_poster/default_movie.jpg"
         return request.build_absolute_uri(url) if (request and url and url.startswith('/')) else url
+
+    def get_mpa_rating_label(self, obj: Movie):
+        try:
+            # Django provides get_FOO_display() for choice fields
+            return obj.get_mpa_rating_display() if obj.mpa_rating else None
+        except Exception:
+            return None
