@@ -171,7 +171,7 @@ export default function TheatersPage() {
         </div>
       </div>
       {filtered.length === 0 && <div className="card">No theaters match your filters.</div>}
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16}}>
+      <div className="cards-grid">
         {filtered.map(t => (
           <article
             key={t.id}

@@ -28,11 +28,34 @@ type AuthContextValue = {
   login: (params: { username?: string; email?: string; password: string }) => Promise<void>
   register: (form: FormData) => Promise<void>
   logout: () => Promise<void>
+  refreshMe: () => Promise<AuthUser | null>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 const STORAGE_KEY = 'mp2_auth'
+
+function normalizeToken(token: unknown): string | null {
+  if (typeof token !== 'string') return null
+  const t = token.trim()
+  if (!t) return null
+  if (t === 'null' || t === 'undefined') return null
+  return t
+}
+
+function normalizeAuthState(raw: unknown): AuthState {
+  if (!raw || typeof raw !== 'object') return { user: null, access: null, refresh: null }
+  const obj = raw as any
+  const access = normalizeToken(obj.access)
+  const refresh = normalizeToken(obj.refresh)
+  const user = obj.user && typeof obj.user === 'object' ? (obj.user as AuthUser) : null
+
+  // A user without a valid access token is effectively logged out.
+  if (!access) {
+    return { user: null, access: null, refresh: null }
+  }
+  return { user, access, refresh }
+}
 
 function setAuthHeader(token?: string | null) {
   if (token) {
@@ -47,33 +70,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { user: null, access: null, refresh: null }
     try {
-      const parsed: AuthState = JSON.parse(raw)
-      setAuthHeader(parsed.access)
-      return parsed
+      const parsed = JSON.parse(raw)
+      const normalized = normalizeAuthState(parsed)
+      setAuthHeader(normalized.access)
+      return normalized
     } catch {
       return { user: null, access: null, refresh: null }
     }
   })
 
-  const isAuthenticated = !!state.user && !!state.access
+  const access = normalizeToken(state.access)
+  const refresh = normalizeToken(state.refresh)
+  const isAuthenticated = !!state.user && !!access
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    setAuthHeader(state.access)
+    const normalized: AuthState = {
+      user: state.access ? state.user : null,
+      access: normalizeToken(state.access),
+      refresh: normalizeToken(state.refresh),
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+    setAuthHeader(normalized.access)
   }, [state])
 
   // On boot, if we have tokens but no user, hydrate via /me or try refresh
   useEffect(() => {
     async function hydrate() {
-      if (state.access && !state.user) {
+      if (access && !state.user) {
         try {
           const { data } = await api.get('/api/auth/me/')
           setState(prev => ({ ...prev, user: data }))
         } catch (err: any) {
           // Try refresh once if access expired
-          if (state.refresh) {
+          if (refresh) {
             try {
-              const { data } = await api.post('/api/auth/refresh/', { refresh: state.refresh })
+              const { data } = await api.post('/api/auth/refresh/', { refresh })
               setState(prev => ({ ...prev, access: data.access }))
               const me = await api.get('/api/auth/me/')
               setState(prev => ({ ...prev, user: me.data }))
@@ -93,9 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const interceptor = api.interceptors.response.use(
       (resp) => resp,
       async (error) => {
-        if (error?.response?.status === 401 && state.refresh) {
+        if (error?.response?.status === 401 && refresh) {
           try {
-            const { data } = await api.post('/api/auth/refresh/', { refresh: state.refresh })
+            const { data } = await api.post('/api/auth/refresh/', { refresh })
             setState(prev => ({ ...prev, access: data.access }))
             setAuthHeader(data.access)
             // retry original request
@@ -109,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
     return () => api.interceptors.response.eject(interceptor)
-  }, [state.refresh])
+  }, [refresh])
 
   const login = useCallback(async ({ username, email, password }: { username?: string; email?: string; password: string }) => {
     const payload = { username: username ?? email, password }
@@ -126,13 +157,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login])
 
   const logout = useCallback(async () => {
-    if (state.refresh) {
+    if (refresh) {
       try { await api.post('/api/auth/logout/', { refresh: state.refresh }) } catch {}
     }
     setState({ user: null, access: null, refresh: null })
-  }, [state.refresh])
+  }, [refresh, state.refresh])
 
-  const value = useMemo<AuthContextValue>(() => ({ user: state.user, isAuthenticated, login, register, logout }), [state.user, isAuthenticated, login, register, logout])
+  const refreshMe = useCallback(async () => {
+    if (!access) return null
+    const { data } = await api.get('/api/auth/me/')
+    setState(prev => ({ ...prev, user: data }))
+    return data as AuthUser
+  }, [access])
+
+  const value = useMemo<AuthContextValue>(() => ({ user: state.user, isAuthenticated, login, register, logout, refreshMe }), [state.user, isAuthenticated, login, register, logout, refreshMe])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

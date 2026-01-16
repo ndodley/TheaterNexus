@@ -1,13 +1,13 @@
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth import get_user_model
 
-from .serializers import RegisterSerializer, UserSerializer, MyTokenObtainPairSerializer
+from .serializers import RegisterSerializer, UserSerializer, MeSerializer, MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
@@ -24,8 +24,8 @@ class RegisterView(APIView):
 		return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
-class MeView(RetrieveAPIView):
-	serializer_class = UserSerializer
+class MeView(RetrieveUpdateAPIView):
+	serializer_class = MeSerializer
 	permission_classes = [permissions.IsAuthenticated]
 
 	def get_object(self):

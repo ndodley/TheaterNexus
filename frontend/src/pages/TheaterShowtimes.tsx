@@ -235,7 +235,7 @@ export default function TheaterShowtimesPage() {
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/movies/${movieId}`) }}
         >
-          <div style={{display:'grid', gridTemplateColumns:'160px 1fr', gap:16}}>
+          <div className="media-grid">
             <div>
               {mv.image ? (
                 <img src={imageUrl(mv.image)} alt={mv.title} style={{width:'100%', height:220, objectFit:'cover', borderRadius:12}} />
