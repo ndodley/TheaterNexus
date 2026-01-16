@@ -8,7 +8,9 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
   const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const [isNavOpen, setIsNavOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const navRef = useRef<HTMLDivElement | null>(null)
 
   const onLogout = async () => {
     await logout()
@@ -22,6 +24,9 @@ export default function Navbar() {
       if (isAccountOpen && !menuRef.current.contains(e.target as Node)) {
         setIsAccountOpen(false)
       }
+      if (navRef.current && isNavOpen && !navRef.current.contains(e.target as Node)) {
+        setIsNavOpen(false)
+      }
     }
     document.addEventListener('pointerdown', onDocPointerDown)
     return () => document.removeEventListener('pointerdown', onDocPointerDown)
@@ -29,7 +34,7 @@ export default function Navbar() {
 
   return (
     <nav className="nav" style={{ background: 'var(--nav-bg)' }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)', position:'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="MP2 Home">MP2 Tickets</Link>
           <div className="nav-links">
@@ -43,6 +48,10 @@ export default function Navbar() {
               <span className="mi-icon" aria-hidden>🎟️</span><span>Theaters</span>
             </NavLink>
           </div>
+          <button className="menu-toggle" aria-label="Open menu" onClick={() => setIsNavOpen(v => !v)}>
+            <span aria-hidden>☰</span>
+            <span>Menu</span>
+          </button>
 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -115,6 +124,44 @@ export default function Navbar() {
             )
           )}
         </div>
+
+        {isNavOpen && (
+          <div ref={navRef} className="mobile-menu slide-up">
+            <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/movies') }}>
+              <span className="mi-icon" aria-hidden>🎬</span><span>Movies</span>
+            </button>
+            <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/showtimes') }}>
+              <span className="mi-icon" aria-hidden>🕒</span><span>Showtimes</span>
+            </button>
+            <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/theaters') }}>
+              <span className="mi-icon" aria-hidden>🎟️</span><span>Theaters</span>
+            </button>
+            {!isAuthenticated ? (
+              <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/login') }}>
+                <span className="mi-icon" aria-hidden>🔐</span><span>Sign in</span>
+              </button>
+            ) : (
+              <>
+                <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/cart') }}>
+                  <span className="mi-icon" aria-hidden>🛒</span><span>Cart</span>
+                </button>
+                {user?.role === 'admin' && (
+                  <a className="menu-item" href={adminUrl()} target="_blank" rel="noreferrer">
+                    <span className="mi-icon" aria-hidden>🛠️</span><span>Admin</span>
+                  </a>
+                )}
+                {user?.role === 'employee' && (
+                  <button className="menu-item" onClick={() => { setIsNavOpen(false); navigate('/employee') }}>
+                    <span className="mi-icon" aria-hidden>💻</span><span>Console</span>
+                  </button>
+                )}
+                <button className="menu-item" onClick={() => { setIsNavOpen(false); setIsAccountOpen(true) }}>
+                  <span className="mi-icon" aria-hidden>👤</span><span>My Account</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   )

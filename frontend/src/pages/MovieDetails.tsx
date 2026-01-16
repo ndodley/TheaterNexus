@@ -155,7 +155,7 @@ export default function MovieDetailsPage() {
   return (
     <section className="container fade-in" style={{paddingTop: 24, paddingBottom: 24}}>
       <Link to="/movies" style={{display:'inline-block', marginBottom:12}}>← Back to Movies</Link>
-      <div className="card" style={{display:'grid', gridTemplateColumns:'280px 1fr', gap:24}}>
+      <div className="card details-grid">
         {(movie.image_url || movie.image) && (
           <img src={imageUrl(movie.image_url || movie.image)} alt={movie.title} style={{width:'100%', height:360, objectFit:'cover', borderRadius:12}} />
         )}

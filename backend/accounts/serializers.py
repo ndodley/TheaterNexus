@@ -41,6 +41,25 @@ class UserSerializer(serializers.ModelSerializer):
             return None
 
 
+class MeSerializer(UserSerializer):
+    """Serializer for the authenticated user's own profile.
+
+    Only allows updating basic profile fields (not role/permissions, email, or avatar).
+    Avatar is managed via the dedicated /api/auth/avatar/ endpoint.
+    """
+
+    class Meta(UserSerializer.Meta):
+        read_only_fields = list(set(UserSerializer.Meta.read_only_fields + [
+            "username",
+            "email",
+            "role",
+            "is_staff",
+            "is_superuser",
+            "avatar",
+            "avatar_url",
+        ]))
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(
