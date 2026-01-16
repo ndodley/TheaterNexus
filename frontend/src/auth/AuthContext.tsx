@@ -33,7 +33,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-const STORAGE_KEY = 'mp2_auth'
+const STORAGE_KEY = 'theaternexus_auth'
 
 function normalizeToken(token: unknown): string | null {
   if (typeof token !== 'string') return null
