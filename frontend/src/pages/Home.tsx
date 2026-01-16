@@ -71,7 +71,7 @@ function HomePage() {
           <div className="home-heroHeader">
             <div className="home-heroKicker">Trending now • Fresh releases • Fast checkout</div>
             <h1 className="home-heroTitle">
-              Welcome to <span className="logo" style={{ color: 'var(--primary)' }}>MP2</span>
+              Welcome to <span className="logo" style={{ color: 'var(--primary)' }}>Theater Nexus</span>
             </h1>
             <p className="home-heroSubtitle">Your modern movie ticketing experience. Browse films, explore details, and book with ease.</p>
           </div>

@@ -36,7 +36,7 @@ export default function Navbar() {
     <nav className="nav" style={{ background: 'var(--nav-bg)' }}>
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)', position:'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="MP2 Home">MP2 Tickets</Link>
+          <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="Theater Nexus Home">Theater Nexus</Link>
           <div className="nav-links">
             <NavLink to="/movies" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="mi-icon" aria-hidden>🎬</span><span>Movies</span>

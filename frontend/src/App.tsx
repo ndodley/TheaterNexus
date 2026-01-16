@@ -48,7 +48,7 @@ export default function App() {
       </main>
       <footer>
         <div className="container" style={{paddingBottom:24,opacity:0.8}}>
-          <small>© {new Date().getFullYear()} MP2 — Movie Ticketing</small>
+          <small>© {new Date().getFullYear()} Theater Nexus — Movie Ticketing</small>
         </div>
       </footer>
     </div>
