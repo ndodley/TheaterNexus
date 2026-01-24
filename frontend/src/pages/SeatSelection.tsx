@@ -16,6 +16,8 @@ export default function SeatSelectionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [notice, setNotice] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState<boolean>(false)
 
   useEffect(() => {
     if (!id) return
@@ -55,6 +57,8 @@ export default function SeatSelectionPage() {
     if (!isAuthenticated) { window.location.href = '/login'; return }
     const showtimeId = Number(id)
     try {
+      setSubmitting(true)
+      setNotice(null)
       const seatIds = Array.from(selected)
       // Add each selected seat to cart; backend will refresh holds if already present
       for (const seatId of seatIds) {
@@ -63,7 +67,22 @@ export default function SeatSelectionPage() {
       // Navigate to cart page
       window.location.href = '/cart'
     } catch (err) {
-      console.error('Failed to add to cart', err)
+      const e: any = err as any
+      const status = e?.response?.status
+      if (status === 409) {
+        setNotice('One or more seats were just taken. Please review availability and reselect.')
+        try {
+          const res = await api.get(`/api/showtimes/${id}/seats/`)
+          setData(res.data)
+          const availableIds = new Set<number>(res.data.seats.filter((s: Seat) => s.is_available && !s.is_paid).map((s: Seat) => s.id))
+          setSelected(prev => new Set(Array.from(prev).filter(id => availableIds.has(id))))
+        } catch {}
+      } else {
+        console.error('Failed to add to cart', err)
+        setNotice('Failed to add to cart. Please try again.')
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -95,6 +114,7 @@ export default function SeatSelectionPage() {
           <div style={{marginTop:16}}>
             <div className="legend" style={{display:'flex', alignItems:'center', gap:12, marginBottom:10}}>
               <span className="legend-item"><span className="legend-swatch unavailable"></span><small>Unavailable</small></span>
+              <span className="legend-item"><span className="legend-swatch paid"></span><small>Paid</small></span>
               <span className="legend-item"><span className="legend-swatch available"></span><small>Available</small></span>
               <span className="legend-item"><span className="legend-swatch selected"></span><small>Selected</small></span>
             </div>
@@ -107,16 +127,18 @@ export default function SeatSelectionPage() {
                     {seats.map((seat: Seat) => {
                       const isSelected = selected.has(seat.id)
                       const isUnavailable = !seat.is_available
+                      const isPaid = !!seat.is_paid
                       const title = `${seat.row}${seat.number} • ${seat.seat_type}`
                       const classes = ['seat']
-                      if (isUnavailable) classes.push('is-unavailable')
+                      if (isPaid) classes.push('is-paid')
+                      else if (isUnavailable) classes.push('is-unavailable')
                       if (isSelected) classes.push('is-selected')
                       return (
                         <button
                           key={seat.id}
                           className={classes.join(' ')}
                           onClick={() => toggle(seat)}
-                          disabled={isUnavailable}
+                          disabled={isUnavailable || isPaid}
                           title={title}
                         />
                       )
@@ -130,7 +152,10 @@ export default function SeatSelectionPage() {
                 <div><strong>{selected.size}</strong> seat{selected.size === 1 ? '' : 's'} selected</div>
                 <div style={{opacity:0.85}}>Subtotal: <strong>${total}</strong></div>
               </div>
-              <button onClick={addSelectedToCart} disabled={selected.size === 0} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Continue</button>
+              <div style={{display:'flex', alignItems:'center', gap:10}}>
+                {notice && <small className="chip" style={{background:'#fee', color:'#900'}}>{notice}</small>}
+                <button onClick={addSelectedToCart} disabled={selected.size === 0 || submitting} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>{submitting ? 'Processing…' : 'Continue'}</button>
+              </div>
             </div>
           </div>
         </div>

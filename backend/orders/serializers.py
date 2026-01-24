@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.conf import settings
 from .models import Cart, CartItem, Order, OrderItem, Ticket
 
 
@@ -23,9 +24,17 @@ class CartItemSerializer(serializers.ModelSerializer):
 		try:
 			if movie and getattr(movie, 'image', None):
 				f = movie.image
-				img = getattr(f, 'url', None) or (str(f) if f else None)
+				name = getattr(f, 'name', '') or ''
+				if name.endswith('default_movie.jpg') and 'default_poster/' not in name:
+					media = getattr(settings, 'MEDIA_URL', '/media/')
+					img = f"{media.rstrip('/')}/default_poster/default_movie.jpg"
+				else:
+					img = getattr(f, 'url', None) or (str(f) if f else None)
 		except Exception:
 			img = None
+		if not img:
+			media = getattr(settings, 'MEDIA_URL', '/media/')
+			img = f"{media.rstrip('/')}/default_poster/default_movie.jpg"
 		return {
 			'movie_id': getattr(movie, 'id', None),
 			'movie_title': getattr(movie, 'title', ''),
@@ -64,9 +73,17 @@ class OrderItemSerializer(serializers.ModelSerializer):
 		try:
 			if movie and getattr(movie, 'image', None):
 				f = movie.image
-				img = getattr(f, 'url', None) or (str(f) if f else None)
+				name = getattr(f, 'name', '') or ''
+				if name.endswith('default_movie.jpg') and 'default_poster/' not in name:
+					media = getattr(settings, 'MEDIA_URL', '/media/')
+					img = f"{media.rstrip('/')}/default_poster/default_movie.jpg"
+				else:
+					img = getattr(f, 'url', None) or (str(f) if f else None)
 		except Exception:
 			img = None
+		if not img:
+			media = getattr(settings, 'MEDIA_URL', '/media/')
+			img = f"{media.rstrip('/')}/default_poster/default_movie.jpg"
 		return {
 			'movie_id': getattr(movie, 'id', None),
 			'movie_title': getattr(movie, 'title', ''),

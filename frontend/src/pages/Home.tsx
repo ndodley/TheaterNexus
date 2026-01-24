@@ -1,12 +1,51 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, imageUrl } from '../api'
 import type { Movie } from '../types'
+import HeroCarousel, { type HeroSlide } from '../components/HeroCarousel'
 
-export default function HomePage() {
+function HomePage() {
+  const navigate = useNavigate()
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const statusKey = (m: Movie) => (m.availability_status || '').toLowerCase()
+  const hasPoster = (m: Movie) => !!(m.image_url || m.image)
+  const ratingNum = (m: Movie) => {
+    const n = typeof m.rating_average === 'number' ? m.rating_average : Number(m.rating_average)
+    return Number.isFinite(n) ? n : 0
+  }
+
+  const withPoster = movies.filter(hasPoster)
+  const nowShowingWithPoster = withPoster
+    .filter(m => statusKey(m) === 'now_showing')
+    .sort((a, b) => ratingNum(b) - ratingNum(a))
+  const comingSoonWithPoster = withPoster
+    .filter(m => statusKey(m) === 'coming_soon')
+    .sort((a, b) => ratingNum(b) - ratingNum(a))
+
+  // Pick a balanced set so the hero isn't dominated by one status.
+  const heroPicked: Movie[] = []
+  heroPicked.push(...nowShowingWithPoster.slice(0, 4))
+  heroPicked.push(...comingSoonWithPoster.slice(0, 2))
+
+  if (heroPicked.length < 6) {
+    const pickedIds = new Set(heroPicked.map(m => m.id))
+    const rest = withPoster
+      .filter(m => !pickedIds.has(m.id))
+      .sort((a, b) => ratingNum(b) - ratingNum(a))
+    heroPicked.push(...rest.slice(0, 6 - heroPicked.length))
+  }
+
+  const heroMovies = heroPicked.slice(0, 6)
+
+  const heroSlides: HeroSlide[] = heroMovies.map(m => ({
+      src: imageUrl(m.image_url || m.image),
+      alt: m.title,
+      caption: m.title,
+      onClick: () => navigate(`/movies/${m.id}`),
+    }))
 
   useEffect(() => {
     let active = true
@@ -18,30 +57,62 @@ export default function HomePage() {
     return () => { active = false }
   }, [])
 
-  const nowShowing = movies.filter(m => (m.availability_status || '').toLowerCase() === 'now_showing')
-  const comingSoon = movies.filter(m => (m.availability_status || '').toLowerCase() === 'coming_soon')
+  const nowShowing = movies.filter(m => statusKey(m) === 'now_showing')
+  const comingSoon = movies.filter(m => statusKey(m) === 'coming_soon')
+
+  const topNowShowing = nowShowing.slice(0, 8)
+  const topComingSoon = comingSoon.slice(0, 8)
 
   return (
     <div>
       {/* Hero */}
       <section className="fade-in" style={{ paddingTop: 40, paddingBottom: 40, background: 'linear-gradient(180deg, rgba(124,58,237,0.10), rgba(124,58,237,0.03))' }}>
         <div className="container">
-          <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-            <h1 style={{ marginTop: 0, marginBottom: 12 }}>
-              Welcome to <span className="logo" style={{ color: 'var(--primary)' }}>MP2</span>
+          <div className="home-heroHeader">
+            <div className="home-heroKicker">Trending now • Fresh releases • Fast checkout</div>
+            <h1 className="home-heroTitle">
+              Welcome to <span className="logo" style={{ color: 'var(--primary)' }}>Theater Nexus</span>
             </h1>
-            <p style={{ margin: 0, opacity: 0.85 }}>Your modern movie ticketing experience. Browse films, explore details, and book with ease.</p>
-            <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <Link to="/movies"><button style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Browse Movies</button></Link>
-              <a href="#now-showing"><button>Now Showing</button></a>
-              <a href="#coming-soon"><button>Coming Soon</button></a>
-            </div>
+            <p className="home-heroSubtitle">Your modern movie ticketing experience. Browse films, explore details, and book with ease.</p>
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <HeroCarousel slides={heroSlides} height={420} intervalMs={7000}>
+              {({ activeIndex }) => {
+                const featured = heroMovies[activeIndex]
+                const statusLabel = featured?.availability_status
+                  ? featured.availability_status.toLowerCase().replaceAll('_', ' ')
+                  : ''
+                return (
+                  <div className="hero__glass">
+                    <div className="hero__kicker">Featured</div>
+                    <h2 className="hero__title" style={{ marginTop: 12 }}>
+                      {featured ? featured.title : 'Featured Movies'}
+                    </h2>
+                    <p className="hero__subtitle">
+                      {featured ? (
+                        <>
+                          {featured.genres?.length ? <>{featured.genres.slice(0, 2).map(g => g.name).join(' / ')} • </> : null}
+                          {statusLabel ? statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1) : 'Now Showing'}
+                        </>
+                      ) : (
+                        <>Click a poster to open details.</>
+                      )}
+                    </p>
+
+                    {featured?.plot_summary && (
+                      <div className="hero__caption">{featured.plot_summary.slice(0, 140)}{featured.plot_summary.length > 140 ? '…' : ''}</div>
+                    )}
+                  </div>
+                )
+              }}
+            </HeroCarousel>
           </div>
         </div>
       </section>
 
       {/* Sections */}
-      <section className="container" style={{ paddingTop: 24, paddingBottom: 24 }}>
+      <section className="container home-sections" style={{ paddingTop: 24, paddingBottom: 24 }}>
         {loading && (
           <div className="card">Loading featured movies…</div>
         )}
@@ -51,18 +122,21 @@ export default function HomePage() {
 
         {!loading && !error && (
           <>
-            {nowShowing.length > 0 && (
-              <div id="now-showing" style={{ marginBottom: 24 }}>
-                <h2 style={{ margin: '8px 0 12px' }}>Now Showing</h2>
-                <div className="scroll-row">
-                  {nowShowing.slice(0, 10).map(m => (
-                    <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ display: 'block', padding: 0, overflow: 'hidden' }}>
+            <div className="home-sectionsGrid">
+              <div id="now-showing" className="home-section">
+                <div className="home-sectionHeader">
+                  <h2 className="home-sectionTitle">Now Showing</h2>
+                  <Link className="home-sectionLink" to="/movies">View all</Link>
+                </div>
+                <div className="home-grid">
+                  {topNowShowing.map(m => (
+                    <Link key={m.id} to={`/movies/${m.id}`} className="home-movieCard">
                       {m.image && (
-                        <img src={imageUrl(m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
+                        <img className="home-card-img" src={imageUrl(m.image_url || m.image)} alt={m.title} />
                       )}
-                      <div style={{ padding: 10 }}>
-                        <div style={{ fontWeight: 600 }}>{m.title}</div>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                      <div className="home-movieBody">
+                        <div className="home-movieTitle">{m.title}</div>
+                        <div className="home-movieBadges">
                           {m.genres.slice(0, 2).map(g => <span key={g.id} className="badge">{g.name}</span>)}
                         </div>
                       </div>
@@ -70,20 +144,21 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-            )}
 
-            {comingSoon.length > 0 && (
-              <div id="coming-soon" style={{ marginBottom: 24 }}>
-                <h2 style={{ margin: '8px 0 12px' }}>Coming Soon</h2>
-                <div className="scroll-row">
-                  {comingSoon.slice(0, 10).map(m => (
-                    <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ display: 'block', padding: 0, overflow: 'hidden' }}>
+              <div id="coming-soon" className="home-section">
+                <div className="home-sectionHeader">
+                  <h2 className="home-sectionTitle">Coming Soon</h2>
+                  <Link className="home-sectionLink" to="/movies">View all</Link>
+                </div>
+                <div className="home-grid">
+                  {topComingSoon.map(m => (
+                    <Link key={m.id} to={`/movies/${m.id}`} className="home-movieCard">
                       {m.image && (
-                        <img src={imageUrl(m.image)} alt={m.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
+                        <img className="home-card-img" src={imageUrl(m.image_url || m.image)} alt={m.title} />
                       )}
-                      <div style={{ padding: 10 }}>
-                        <div style={{ fontWeight: 600 }}>{m.title}</div>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                      <div className="home-movieBody">
+                        <div className="home-movieTitle">{m.title}</div>
+                        <div className="home-movieBadges">
                           {m.genres.slice(0, 2).map(g => <span key={g.id} className="badge">{g.name}</span>)}
                         </div>
                       </div>
@@ -91,10 +166,12 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </section>
     </div>
   )
 }
+
+export default HomePage

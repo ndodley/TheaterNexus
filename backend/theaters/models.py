@@ -3,6 +3,8 @@ from django.db import models
 
 class Theater(models.Model):
 	name = models.CharField(max_length=255, unique=True)
+	# Single address field (optional) for display and filtering
+	address = models.TextField(blank=True, default="")
 	is_active = models.BooleanField(default=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)

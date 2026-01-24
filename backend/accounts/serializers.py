@@ -7,22 +7,59 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
             "id",
             "username",
             "email",
+            "email_verified",
             "first_name",
             "last_name",
             "phone_number",
             "avatar",
+            "avatar_url",
             "date_of_birth",
             "role",
             "is_staff",
             "is_superuser",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
+
+    def get_avatar_url(self, obj: User):
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        try:
+            if obj.avatar:
+                url = obj.avatar.url
+            else:
+                from django.conf import settings
+                media = getattr(settings, 'MEDIA_URL', '/media/')
+                url = f"{media.rstrip('/')}/default_poster/default_avatar.jpg"
+            return request.build_absolute_uri(url) if (request and url and url.startswith('/')) else url
+        except Exception:
+            return None
+
+
+class MeSerializer(UserSerializer):
+    """Serializer for the authenticated user's own profile.
+
+    Only allows updating basic profile fields (not role/permissions, email, or avatar).
+    Avatar is managed via the dedicated /api/auth/avatar/ endpoint.
+    """
+
+    class Meta(UserSerializer.Meta):
+        read_only_fields = list(set(UserSerializer.Meta.read_only_fields + [
+            "username",
+            "email",
+            "email_verified",
+            "role",
+            "is_staff",
+            "is_superuser",
+            "avatar",
+            "avatar_url",
+        ]))
 
 
 class RegisterSerializer(serializers.ModelSerializer):

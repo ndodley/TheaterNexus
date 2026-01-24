@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <div class="module" style="max-width: 900px;">
+    <p style="margin:0 0 12px;">
+      Upload a CSV to create/update users.
+      <a href="../bulk-template/">Download template</a>
+    </p>
+
+    <form method="post" enctype="multipart/form-data" class="form-horizontal">
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        <div class="form-row">
+          <label for="id_csv_file">CSV file</label>
+          <input id="id_csv_file" type="file" name="csv_file" accept=".csv,text/csv" required />
+        </div>
+      </fieldset>
+      <div class="submit-row">
+        <input type="submit" value="Preview" class="default" />
+        <a class="button cancel-link" href="..">Cancel</a>
+      </div>
+    </form>
+
+    <details style="margin-top: 1rem;">
+      <summary><strong>CSV Columns</strong></summary>
+      <ul>
+        <li><code>email</code> – required; used as the unique identifier (create/update)</li>
+        <li><code>first_name</code> – optional</li>
+        <li><code>last_name</code> – optional</li>
+        <li><code>role</code> – optional; one of: <code>admin</code>, <code>employee</code>, <code>customer</code></li>
+        <li><code>is_active</code> – optional; 1/0, true/false, yes/no</li>
+        <li><code>is_staff</code> – optional; 1/0, true/false, yes/no</li>
+        <li><code>email_verified</code> – optional; 1/0, true/false, yes/no</li>
+        <li><code>phone_number</code> – optional</li>
+        <li><code>date_of_birth</code> – optional; YYYY-MM-DD</li>
+        <li><code>password</code> – optional; if blank on create, user gets an unusable password</li>
+      </ul>
+    </details>
+  </div>
+{% endblock %}

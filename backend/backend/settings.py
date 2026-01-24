@@ -10,22 +10,36 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from a local .env file if present.
+# This keeps secrets out of source control while allowing easy local setup.
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv(BASE_DIR / '.env')
+except Exception:
+    # If python-dotenv isn't installed (or file missing), fall back to OS env vars.
+    pass
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c$di1flc2t2h(wld=h+_i$-owuymzccn1vidcolc3b)ot85+1z'
+# Load from environment for public repos and deployments.
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or 'dev-insecure-change-me'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (os.getenv('DJANGO_DEBUG', '1') == '1')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# Comma-separated list, e.g. "example.com,localhost,127.0.0.1"
+_allowed_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts.split(',') if h.strip()]
 
 
 # Application definition
@@ -41,7 +55,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'accounts',
+    'accounts.apps.AccountsConfig',
     'movies',
     'theaters',
     'showtimes',
@@ -86,11 +100,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mp2',
-        'USER': 'postgres',
-        'PASSWORD': 'Post123$',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('POSTGRES_DB', 'theater_nexus'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -180,14 +194,44 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# Stripe configuration (set these via environment variables in development)
-import os
-# Read from environment if set; otherwise use the explicit keys configured below.
-# NOTE: Do not pass the actual key string to os.environ.get — it returns None.
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY') or 'sk_test_51Skyy2GoXnzvIyIBwMbiMmJnqr77TCMhfKdB9okdRN5cgiphDsrcYbbSJtf5htWBzLcXQfApDI43a8jwdLdqfs3G00HZFZyIqF'
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY') or 'pk_test_51Skyy2GoXnzvIyIBmSz4KMWSsWNCDH8xVlLVVvfQV8IuCXPwL3SfLBXOG1s3jCosoZ2tBMJP5VK0nj7XikRVtHQY00Jzmkd1LG'
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+# Stripe configuration (set via environment variables)
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 
 # Cart/Orders defaults
 CART_HOLD_MINUTES = 10
 ORDER_CURRENCY = 'usd'
+
+# --- Email (verification / transactional) ---
+
+PRODUCT_NAME = os.getenv('PRODUCT_NAME', 'Theater Nexus')
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5173')
+SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', '')
+
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = (os.getenv('EMAIL_USE_TLS', '1') == '1')
+EMAIL_USE_SSL = (os.getenv('EMAIL_USE_SSL', '0') == '1')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+
+# DEV-only controls for environments with broken TLS interception certs.
+# Prefer fixing the machine/network trust store; this is a fallback.
+EMAIL_INSECURE_TLS = (os.getenv('EMAIL_INSECURE_TLS', '0') == '1')
+EMAIL_CA_BUNDLE = os.getenv('EMAIL_CA_BUNDLE', '')
+
+# Default to console backend in dev so local signups show the email immediately.
+# If EMAIL_HOST is provided, auto-switch to SMTP even in DEBUG.
+_default_email_backend = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_HOST
+    else ('django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend')
+)
+EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', _default_email_backend)
+
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"{PRODUCT_NAME} <no-reply@localhost>")
+
+EMAIL_VERIFICATION_SALT = os.getenv('EMAIL_VERIFICATION_SALT', 'accounts.email_verification')
+EMAIL_VERIFICATION_MAX_AGE_SECONDS = int(os.getenv('EMAIL_VERIFICATION_MAX_AGE_SECONDS', str(60 * 60 * 24)))

@@ -27,6 +27,7 @@ class UserManager(DjangoUserManager):
 class User(AbstractUser):
 	# Make email unique and the canonical identifier we mirror in username
 	email = models.EmailField(unique=True)
+	email_verified = models.BooleanField(default=False)
 	class Role(models.TextChoices):
 		ADMIN = 'admin', 'Admin'
 		EMPLOYEE = 'employee', 'Employee'
@@ -39,7 +40,7 @@ class User(AbstractUser):
 	)
 
 	phone_number = models.CharField(max_length=20, blank=True)
-	avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+	avatar = models.ImageField(upload_to='user_pics/', null=True, blank=True)
 	date_of_birth = models.DateField(null=True, blank=True)
 
 	# Use custom manager so CLI createsuperuser sets role=admin
