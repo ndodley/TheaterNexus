@@ -1,0 +1,10 @@
+Welcome to {{ product_name }}
+
+Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+Your account is ready.
+
+If you ever need it, you can confirm email here:
+{{ verify_url }}
+
+{% if support_email %}Need help? Reply to {{ support_email }}.{% endif %}

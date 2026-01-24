@@ -5,3 +5,5 @@ djangorestframework-simplejwt
 psycopg[binary]
 Pillow
 stripe
+python-dotenv
+google-auth

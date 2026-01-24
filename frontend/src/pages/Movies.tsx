@@ -102,7 +102,7 @@ export default function MoviesPage() {
   return (
     <section className="container slide-up" style={{paddingTop: 24, paddingBottom: 24}}>
       <h2 style={{margin:'8px 0 16px', letterSpacing: 0.2}}>
-        <span style={{marginRight:8}}>🔎</span> Advanced Search
+        <span style={{marginRight:8}}>🔎</span> Movies
       </h2>
 
       {/* Advanced Search panel */}

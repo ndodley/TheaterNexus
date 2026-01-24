@@ -27,6 +27,7 @@ class UserManager(DjangoUserManager):
 class User(AbstractUser):
 	# Make email unique and the canonical identifier we mirror in username
 	email = models.EmailField(unique=True)
+	email_verified = models.BooleanField(default=False)
 	class Role(models.TextChoices):
 		ADMIN = 'admin', 'Admin'
 		EMPLOYEE = 'employee', 'Employee'

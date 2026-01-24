@@ -1,0 +1,10 @@
+Confirm your email for {{ product_name }}
+
+Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+Please confirm your email address to finish setting up your account:
+
+{{ verify_url }}
+
+If you didn’t create an account, you can safely ignore this email.
+{% if support_email %}Need help? Reply to {{ support_email }}.{% endif %}

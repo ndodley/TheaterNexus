@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <div class="module" style="max-width: 1100px;">
+    <p style="margin:0 0 12px;">
+      This preview shows what will be created/updated. Fix any rows with errors before confirming.
+    </p>
+
+    <ul style="margin:0 0 12px;">
+      <li><strong>Will create:</strong> {{ will_create }}</li>
+      <li><strong>Will update:</strong> {{ will_update }}</li>
+      <li><strong>Rows with errors:</strong> {{ error_count }}</li>
+    </ul>
+
+    <div style="overflow:auto; border:1px solid var(--hairline-color, #ddd); border-radius: 4px;">
+      <table class="adminlist" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:6px;">Row</th>
+            <th style="text-align:left; padding:6px;">Action</th>
+            {% for h in headers %}
+              <th style="text-align:left; padding:6px; white-space:nowrap;">{{ h }}</th>
+            {% endfor %}
+            <th style="text-align:left; padding:6px;">Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            <tr>
+              <td style="padding:6px; white-space:nowrap;">{{ r.row }}</td>
+              <td style="padding:6px; white-space:nowrap;">
+                {% if r.action == 'create' %}
+                  <span style="color:#16a34a; font-weight:700;">Create</span>
+                {% else %}
+                  <span style="color:#111827; font-weight:700;">Update</span>
+                {% endif %}
+              </td>
+              {% for v in r.values %}
+                <td style="padding:6px; max-width: 260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ v }}</td>
+              {% endfor %}
+              <td style="padding:6px;">
+                {% if r.errors %}
+                  <span style="color:#b91c1c; font-weight:600;">{{ r.errors|join:", " }}</span>
+                {% else %}
+                  <span style="color:#16a34a; font-weight:600;">OK</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <form method="post" style="margin-top: 14px;">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1" />
+      <div class="submit-row">
+        <input type="submit" value="Confirm import" class="default" {% if error_count %}disabled{% endif %} />
+        <a class="button cancel-link" href="..">Cancel</a>
+        <a class="button" href=".">Upload a different file</a>
+      </div>
+      {% if error_count %}
+        <p style="margin:10px 0 0; color:#b91c1c;">Cannot import until all row errors are fixed.</p>
+      {% endif %}
+    </form>
+  </div>
+{% endblock %}
