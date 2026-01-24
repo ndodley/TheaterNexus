@@ -1,33 +1,40 @@
 {% extends "admin/change_list.html" %}
 
+{% block object-tools-items %}
+  {{ block.super }}
+  <li>
+    <a href="export-csv/" class="viewsitelink">Download CSV</a>
+  </li>
+{% endblock %}
+
 {% block object-tools %}
   {{ block.super }}
   <div style="margin: 10px 0;">
     <form method="post" action="" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
       {% csrf_token %}
       <input type="hidden" name="action" value="generate_schedule" />
-      {{ action_form.select_across }}
-      {{ action_form.index }}
+      {{ generate_form.select_across }}
+      {{ generate_form.index }}
       <div>
-        <label>Movie<br>{{ action_form.movie }}</label>
+        <label>Movie<br>{{ generate_form.movie }}</label>
       </div>
       <div>
-        <label>Theater<br>{{ action_form.theater }}</label>
+        <label>Theater<br>{{ generate_form.theater }}</label>
       </div>
       <div>
-        <label>Start date<br>{{ action_form.start_date }}</label>
+        <label>Start date<br>{{ generate_form.start_date }}</label>
       </div>
       <div>
-        <label>End date<br>{{ action_form.end_date }}</label>
+        <label>End date<br>{{ generate_form.end_date }}</label>
       </div>
       <div>
-        <label>Times<br>{{ action_form.times }}</label>
+        <label>Times<br>{{ generate_form.times }}</label>
       </div>
       <div>
-        <label>Base price<br>{{ action_form.base_price }}</label>
+        <label>Base price<br>{{ generate_form.base_price }}</label>
       </div>
       <div>
-        <label>Status<br>{{ action_form.status }}</label>
+        <label>Status<br>{{ generate_form.status }}</label>
       </div>
       <div>
         <button type="submit" class="button button-primary">Generate schedule</button>

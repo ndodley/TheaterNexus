@@ -2,6 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.forms import widgets
 from .models import Theater, Screen, Seat
+from backend.admin_utils import ExportCsvAdminMixin
 
 
 class SeatInline(admin.TabularInline):
@@ -22,7 +23,7 @@ class CustomLayoutActionForm(forms.Form):
 	start_row = forms.CharField(max_length=1, required=False, help_text="Starting row letter (default A)")
 
 @admin.register(Screen)
-class ScreenAdmin(admin.ModelAdmin):
+class ScreenAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	list_display = ("name", "theater", "seat_count", "is_active")
 	list_filter = ("theater", "is_active")
 	search_fields = ("name", "theater__name")
@@ -30,6 +31,7 @@ class ScreenAdmin(admin.ModelAdmin):
 	actions = ["generate_standard_layout", "generate_custom_layout"]
 	# Use the custom action form so the changelist can render safely
 	action_form = CustomLayoutActionForm
+	change_list_template = "admin/csv_export_change_list.html"
 
 	def generate_standard_layout(self, request, queryset):
 		from django.db import transaction
@@ -90,14 +92,16 @@ class ScreenAdmin(admin.ModelAdmin):
 
 
 @admin.register(Theater)
-class TheaterAdmin(admin.ModelAdmin):
+class TheaterAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	list_display = ("name", "is_active")
 	list_filter = ("is_active",)
 	search_fields = ("name",)
+	change_list_template = "admin/csv_export_change_list.html"
 
 
 @admin.register(Seat)
-class SeatAdmin(admin.ModelAdmin):
+class SeatAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	list_display = ("screen", "row", "number", "seat_type", "status")
 	list_filter = ("seat_type", "status", "screen__theater")
 	search_fields = ("screen__name", "row")
+	change_list_template = "admin/csv_export_change_list.html"

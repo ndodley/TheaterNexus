@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import GoogleSignInButton from '../auth/GoogleSignInButton'
 
 export default function RegisterPage() {
-  const { register } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [dob, setDob] = useState('')
-  const [avatar, setAvatar] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,15 +18,12 @@ export default function RegisterPage() {
     setError(null); setLoading(true)
     try {
       const form = new FormData()
-      form.append('email', email)
+      form.append('email', email.trim())
       form.append('password', password)
       if (firstName) form.append('first_name', firstName)
       if (lastName) form.append('last_name', lastName)
-      if (phone) form.append('phone_number', phone)
-      if (dob) form.append('date_of_birth', dob)
-      if (avatar) form.append('avatar', avatar)
       await register(form)
-      navigate('/')
+      navigate('/welcome?new=1')
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Registration failed')
     } finally {
@@ -37,44 +32,77 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: 640 }}>
-      <h1>Create account</h1>
-      <form onSubmit={onSubmit} className="card" style={{ padding: 24, display: 'grid', gap: 12 }}>
-        <div className="grid-2">
-          <label>
-            <span>First name</span>
-            <input value={firstName} onChange={e => setFirstName(e.target.value)} />
-          </label>
-          <label>
-            <span>Last name</span>
-            <input value={lastName} onChange={e => setLastName(e.target.value)} />
-          </label>
+    <section className="auth-shell">
+      <div className="card auth-card slide-up" style={{ width: 'min(560px, 100%)' }}>
+        <header className="auth-header">
+          <h1 className="auth-title">Create your account</h1>
+          <p className="auth-subtitle">Sign up to save favorites, leave reviews, and checkout faster.</p>
+        </header>
+
+        <div className="provider-grid" style={{ maxWidth: 420 }}>
+          <GoogleSignInButton
+            mode="signup"
+            onCredential={async (credential) => {
+              setError(null)
+              const { created } = await loginWithGoogle(credential)
+              navigate(created ? '/welcome?new=1' : '/')
+            }}
+          />
         </div>
-        <label>
-          <span>Email</span>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          <span>Password</span>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-        </label>
-        <div className="grid-2">
-          <label>
-            <span>Phone number</span>
-            <input value={phone} onChange={e => setPhone(e.target.value)} />
-          </label>
-          <label>
-            <span>Date of birth</span>
-            <input type="date" value={dob} onChange={e => setDob(e.target.value)} />
-          </label>
+
+        <div className="auth-divider" aria-hidden="true">
+          <div className="auth-divider-line" />
+          <div className="auth-divider-text">or create an account with email</div>
+          <div className="auth-divider-line" />
         </div>
-        <label>
-          <span>Avatar (optional)</span>
-          <input type="file" accept="image/*" onChange={e => setAvatar(e.target.files?.[0] || null)} />
-        </label>
-        {error && <div className="error" role="alert">{error}</div>}
-        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Creating…' : 'Create account'}</button>
-      </form>
-    </div>
+
+        <form onSubmit={onSubmit} className="auth-form">
+          <div className="grid-2">
+            <label>
+              <span>First name</span>
+              <input autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+            </label>
+            <label>
+              <span>Last name</span>
+              <input autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} />
+            </label>
+          </div>
+          <label>
+            <span>Email</span>
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <span>Password</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          <small style={{ opacity: 0.75 }}>
+            Password must be at least 8 characters.
+          </small>
+
+          {error && <div className="error" role="alert">{error}</div>}
+
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ justifyContent: 'center' }}>
+            {loading ? 'Creating…' : 'Create account'}
+          </button>
+        </form>
+
+        <p className="auth-footer auth-footer--prominent">
+          Already have an account? <Link to="/login">Sign in</Link>.
+        </p>
+      </div>
+    </section>
   )
 }

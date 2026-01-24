@@ -11,16 +11,19 @@ from urllib.parse import urlparse
 from urllib.request import urlopen
 
 from .models import Genre, Movie
+from backend.admin_utils import ExportCsvAdminMixin
 
 
 @admin.register(Genre)
-class GenreAdmin(admin.ModelAdmin):
+class GenreAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	search_fields = ["name"]
 	list_display = ["id", "name"]
+	change_list_template = "admin/csv_export_change_list.html"
 
 
 @admin.register(Movie)
-class MovieAdmin(admin.ModelAdmin):
+class MovieAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
+	csv_export_filename = "movies.csv"
 	list_display = [
 		"id",
 		"title",
@@ -35,6 +38,46 @@ class MovieAdmin(admin.ModelAdmin):
 
 	# Use a custom changelist template to surface object-tools links
 	change_list_template = "admin/movies/movie/change_list.html"
+
+	def get_csv_export_field_names(self):
+		# Match the movies bulk-upload template schema.
+		return [
+			"title",
+			"duration_minutes",
+			"plot_summary",
+			"release_date",
+			"availability_status",
+			"rating_average",
+			"genres",
+			"image_url",
+		]
+
+	def get_csv_export_row(self, obj, field_names, request):
+		genres = ""
+		try:
+			genres = ",".join(g.name for g in obj.genres.all().order_by('name'))
+		except Exception:
+			genres = ""
+
+		release_date = ""
+		try:
+			release_date = obj.release_date.isoformat() if obj.release_date else ""
+		except Exception:
+			release_date = ""
+
+		# image_url is intended for remote poster ingestion in bulk upload.
+		# We leave it blank so exported files can be re-imported safely without
+		# accidentally trying to fetch local /media/ URLs.
+		return [
+			(getattr(obj, 'title', '') or '').strip(),
+			str(getattr(obj, 'duration_minutes', '') or ''),
+			(getattr(obj, 'plot_summary', '') or ''),
+			release_date,
+			(getattr(obj, 'availability_status', '') or ''),
+			str(getattr(obj, 'rating_average', '') or ''),
+			genres,
+			"",
+		]
 
 	def _parse_release_date(self, value: str):
 		"""Parse a variety of date formats, returning date or raising ValueError."""

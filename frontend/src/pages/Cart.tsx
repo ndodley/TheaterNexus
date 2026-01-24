@@ -117,18 +117,6 @@ export default function CartPage() {
             )
           })}
 
-          {/* Upsell card */}
-          <div className="card" style={{display:'grid', gridTemplateColumns:'64px 1fr 160px', alignItems:'center', gap:18, margin:'8px 0 16px'}}>
-            <div style={{fontSize:32}}>🍿</div>
-            <div>
-              <div style={{fontWeight:700}}>Don't forget the co-stars</div>
-              <div style={{opacity:0.85}}>Grab snacks now and skip the line. Add concessions while you checkout.</div>
-            </div>
-            <div style={{textAlign:'right'}}>
-              <button className="btn">Add Some Snacks</button>
-            </div>
-          </div>
-
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div><strong>Subtotal:</strong> ${subtotal.toFixed(2)}</div>
             <button className="btn primary" onClick={() => navigate('/checkout')} style={{minWidth:160}}>Checkout</button>

@@ -15,6 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
+            "email_verified",
             "first_name",
             "last_name",
             "phone_number",
@@ -52,6 +53,7 @@ class MeSerializer(UserSerializer):
         read_only_fields = list(set(UserSerializer.Meta.read_only_fields + [
             "username",
             "email",
+            "email_verified",
             "role",
             "is_staff",
             "is_superuser",

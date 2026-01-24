@@ -7,6 +7,7 @@ from .models import ShowTime
 from movies.models import Movie
 from theaters.models import Theater, Screen
 from django.contrib.admin.helpers import ActionForm
+from backend.admin_utils import ExportCsvAdminMixin
 
 
 class GenerateScheduleActionForm(ActionForm):
@@ -45,7 +46,7 @@ class GenerateScheduleActionForm(ActionForm):
 
 
 @admin.register(ShowTime)
-class ShowTimeAdmin(admin.ModelAdmin):
+class ShowTimeAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	list_display = ('movie', 'get_theater', 'screen', 'start_time', 'end_time', 'status', 'base_price')
 	list_filter = ('status', 'screen__theater', 'movie')
 	search_fields = ('movie__title', 'screen__name', 'screen__theater__name')
@@ -56,7 +57,7 @@ class ShowTimeAdmin(admin.ModelAdmin):
 	change_list_template = 'admin/showtimes/showtime/change_list.html'
 
 	# Add a small form to the actions bar for bulk generation
-	action_form = GenerateScheduleActionForm
+	# Removed: action_form to avoid duplicate controls in action bar.
 
 	actions = ['cancel_selected', 'shift_start_times', 'shift_by_1_day', 'shift_by_2_days', 'generate_schedule']
 
@@ -106,6 +107,7 @@ class ShowTimeAdmin(admin.ModelAdmin):
 
 	def generate_schedule(self, request, queryset):
 		# Generate showtimes for a movie across screens and dates
+		# Use our custom form rendered in the change_list template; no action_form duplication.
 		form = GenerateScheduleActionForm(request.POST)
 		# Ensure action field has proper choices even when no rows are selected
 		if 'action' in form.fields:
@@ -223,6 +225,9 @@ class ShowTimeAdmin(admin.ModelAdmin):
 			# Run the action with an empty queryset; selection not required
 			self.generate_schedule(request, self.model.objects.none())
 			return redirect(request.path)
-		return super().changelist_view(request, extra_context)
+		# Provide the generator form to the custom template so fields render
+		ctx = extra_context or {}
+		ctx['generate_form'] = GenerateScheduleActionForm()
+		return super().changelist_view(request, ctx)
 
 
