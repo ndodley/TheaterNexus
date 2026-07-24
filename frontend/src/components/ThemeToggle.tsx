@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState } from 'react'
+import './ThemeToggle.css'
 
 type ThemeChoice = 'light' | 'dark'
 

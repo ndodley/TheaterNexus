@@ -1,0 +1,5 @@
+/* Movies page.
+   All of this page's visual classes come from components/AdvancedSearchPanel.css
+   and styles/movieGrid.css (used identically by pages/Favorites.tsx), plus the
+   global index.css atoms. This file is the home for any future
+   Movies-only styling. */

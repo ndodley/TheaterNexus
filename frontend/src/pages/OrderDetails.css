@@ -1,0 +1,6 @@
+/* Order Details page.
+   All of this page's visual classes come from the global index.css atoms
+   (.container/.card/.chip/.btn/.fade-in/.section-pad/.mt-*/.opacity-*) plus
+   the shared styles/orderItem.css and styles/ticketChip.css (used
+   identically by Confirmation). This file is the home for any future
+   Order Details-only styling. */

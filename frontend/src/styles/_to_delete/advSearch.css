@@ -1,0 +1,23 @@
+/* Page-level classes shared by Movies, Favorites, Showtimes, TheaterShowtimes,
+   Theaters that surround the advanced search panel but aren't part of it.
+   The panel's own classes (.adv-search, .adv-toolbar, .adv-grid, .adv-block*,
+   .adv-row*, .adv-inline*, .adv-small*) now live in
+   components/AdvancedSearchPanel.css, colocated with the shared
+   AdvancedSearchPanel/AdvancedSearchBlock components. */
+
+/* Results grid, shared by Movies and Favorites (moved from index.css) */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 700px) {
+  .grid { gap: 12px; }
+}
+
+/* Page heading above the search panel, shared by Movies, Favorites, Showtimes, Theaters
+   (TheaterShowtimes has its own dynamic heading and doesn't use this) */
+.adv-page-heading { margin: 8px 0 16px; }
+.adv-page-heading--tight { letter-spacing: 0.2px; }
+
+.results-header { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 12px; }

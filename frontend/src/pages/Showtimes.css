@@ -1,0 +1,7 @@
+/* Showtimes page.
+   Most of this page's visual classes come from components/AdvancedSearchPanel.css,
+   styles/dateTabs.css, styles/mediaGrid.css, and styles/showtimeCard.css
+   (the last shared identically with TheaterShowtimes). This file holds the
+   Showtimes-only per-theater grouping under each movie card. */
+.showtimes-theaterGroups { margin-top: 12px; display: grid; gap: 10px; }
+.showtimes-theaterAddress { opacity: 0.8; display: flex; align-items: center; gap: 6px; }

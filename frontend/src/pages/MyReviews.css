@@ -1,0 +1,7 @@
+/* My Reviews page (moved out of MyReviews.tsx inline styles) */
+.myReviews-header { display: flex; justify-content: space-between; align-items: baseline; }
+.myReviews-emptyCard { padding: 12px; }
+.myReviews-item { padding: 12px; margin-bottom: 12px; }
+.myReviews-itemHeader { display: flex; justify-content: space-between; align-items: center; }
+.myReviews-itemTitle { font-weight: 600; margin-top: 8px; }
+.myReviews-actions { display: flex; gap: 8px; }

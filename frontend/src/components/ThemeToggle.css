@@ -1,0 +1,4 @@
+/* ThemeToggle component.
+   No bespoke rules today — this component renders with the global
+   .btn/.btn-ghost atoms from index.css. This file is the home for any
+   future ThemeToggle-specific styling. */

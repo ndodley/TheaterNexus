@@ -19,6 +19,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# This backend only serves the API + admin; the actual site is the React
+# frontend running separately (Vite dev server, FRONTEND_BASE_URL in
+# settings). By default Django admin's "View Site" link points at "/" on
+# this same backend, which has no page there and 404s. Point it at the
+# frontend instead so the link actually opens something.
+admin.site.site_url = settings.FRONTEND_BASE_URL
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),

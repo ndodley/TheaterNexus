@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getCart, getCheckoutConfig, createCheckoutIntent, finalizeCheckout } from '../api/orders'
+import '../styles/ticketChip.css'
+import './Checkout.css'
 
 // Prefer Vite env var; fall back to backend config
 const ENV_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? ''
@@ -37,21 +40,21 @@ function CheckoutForm({ orderId }: { orderId: number }) {
     // Navigate to confirmation whether Stripe redirects or not
     try {
       // Finalize order on the backend (fallback when webhooks are not active)
-      await api.post(`/api/orders/checkout/finalize/${orderId}/`)
+      await finalizeCheckout(orderId)
     } catch {}
     setSubmitting(false)
     navigate(`/orders/confirmation?order_id=${orderId}`)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card" style={{ padding: 18 }}>
+    <form onSubmit={handleSubmit} className="card checkout-form">
       <PaymentElement />
       {error && (
-        <div className="card" style={{ marginTop: 12, background: '#fee' }}>
+        <div className="card checkout-formError">
           {error}
         </div>
       )}
-      <button className="btn primary" disabled={!stripe || submitting} style={{ marginTop: 12 }}>
+      <button className="btn primary mt-12" disabled={!stripe || submitting}>
         {submitting ? 'Processing…' : 'Pay'}
       </button>
     </form>
@@ -104,7 +107,7 @@ export default function CheckoutPage() {
       try {
         // If no env key, fetch from backend
         if (!ENV_PUBLISHABLE_KEY) {
-          const { data } = await api.get('/api/orders/config/')
+          const { data } = await getCheckoutConfig()
           if (!isActive) return
           const keyVal = typeof data?.publishable_key === 'string' ? data.publishable_key : String(data?.publishable_key ?? '')
           if (keyVal) {
@@ -125,7 +128,7 @@ export default function CheckoutPage() {
 
       // Load cart to show order summary
       try {
-        const cartRes = await api.get('/api/orders/cart/')
+        const cartRes = await getCart()
         if (!isActive) return
         const items = Array.isArray(cartRes?.data?.items)
           ? cartRes.data.items
@@ -140,7 +143,7 @@ export default function CheckoutPage() {
       }
 
       try {
-        const res = await api.post('/api/orders/checkout/create-intent/')
+        const res = await createCheckoutIntent()
         if (!isActive) return
         if (res?.data?.client_secret && res?.data?.order_id) {
           setClientSecret(res.data.client_secret)
@@ -185,56 +188,56 @@ export default function CheckoutPage() {
 
 
   return (
-    <section className="container fade-in" style={{ paddingTop: 24, paddingBottom: 24 }}>
-      <Link to={'/cart'} style={{ display: 'inline-block', marginBottom: 12 }}>
+    <section className="container fade-in section-pad">
+      <Link to={'/cart'} className="back-link">
         ← Back to Cart
       </Link>
-      <h2 style={{ marginTop: 0 }}>Checkout</h2>
-      <div style={{ display: 'grid', gap: 24, gridTemplateColumns: '1fr 1fr' }}>
+      <h2 className="mt-0">Checkout</h2>
+      <div className="checkout-grid">
         <div>
-          <div className="card" style={{ padding: 18 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0 }}>Order Summary</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {currency && <span style={{ opacity: 0.8 }}>Currency: {currency}</span>}
-                <strong style={{ fontSize: 16 }}>Total: ${summarySubtotal.toFixed(2)}</strong>
+          <div className="card checkout-summaryCard">
+            <div className="checkout-summaryHeader">
+              <h3 className="m-0">Order Summary</h3>
+              <div className="checkout-summaryTotals">
+                {currency && <span className="opacity-8">Currency: {currency}</span>}
+                <strong className="checkout-totalValue">Total: ${summarySubtotal.toFixed(2)}</strong>
               </div>
             </div>
             {groups.length === 0 ? (
-              <div style={{ marginTop: 8, opacity: 0.8 }}>No items found in cart.</div>
+              <div className="checkout-emptyNote">No items found in cart.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12 }}>
+              <div className="checkout-itemsList">
                 {groups.map(({ key, items }) => {
                   const info = items[0]?.showtime_info ?? {}
                   const start = info.start_time ? new Date(info.start_time) : null
                   const when = start ? `${start.toLocaleDateString()} • ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''
                   const groupTotal = items.reduce((acc, it) => acc + (typeof it.unit_price === 'number' ? it.unit_price : parseFloat(String(it.unit_price))), 0)
                   return (
-                    <div key={key} style={{ display: 'flex', gap: 12 }}>
+                    <div key={key} className="checkout-itemRow">
                       {info.movie_image ? (
                         <img
                           src={imageUrl(info.movie_image)}
                           alt={info.movie_title ?? 'Poster'}
-                          style={{ width: 84, height: 126, objectFit: 'cover', borderRadius: 8 }}
+                          className="checkout-itemPoster"
                         />
                       ) : (
-                        <div style={{ width: 84, height: 126, borderRadius: 8, background: '#eee' }} />
+                        <div className="checkout-itemPosterPlaceholder" />
                       )}
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600 }}>{info.movie_title || 'Movie'}</div>
-                        <div style={{ opacity: 0.8, marginTop: 4 }}>
+                      <div className="flex-1">
+                        <div className="checkout-itemTitle">{info.movie_title || 'Movie'}</div>
+                        <div className="checkout-itemMeta">
                           {info.theater_name || ''} {info.screen_name ? `• ${info.screen_name}` : ''}
                         </div>
-                        {when && <div style={{ opacity: 0.8 }}>{when}</div>}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                        {when && <div className="opacity-8">{when}</div>}
+                        <div className="checkout-itemChips">
                           {items.map((ci, idx) => (
-                            <span key={idx} className="chip" style={{ padding: '6px 10px', borderRadius: 16, background: '#f3f4f6' }}>
+                            <span key={idx} className="chip ticket-chip">
                               {ci.seat_label}
                             </span>
                           ))}
                         </div>
-                        <div style={{ marginTop: 8, opacity: 0.8 }}>Tickets: {items.length}</div>
-                        <div style={{ marginTop: 4, fontWeight: 600 }}>${groupTotal.toFixed(2)}</div>
+                        <div className="checkout-itemTicketCount">Tickets: {items.length}</div>
+                        <div className="checkout-itemTotal">${groupTotal.toFixed(2)}</div>
                       </div>
                     </div>
                   )

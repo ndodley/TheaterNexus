@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getCart, removeCartItem } from '../api/orders'
+import { useFetch } from '../hooks/useFetch'
+import './Cart.css'
 
 interface ShowtimeInfo { movie_title: string; movie_image?: string | null; theater_name: string; screen_name: string; start_time: string }
 
@@ -23,24 +26,16 @@ interface Cart {
 }
 
 export default function CartPage() {
-  const [cart, setCart] = useState<Cart | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    api.get('/api/orders/cart/')
-      .then(res => { if (active) setCart(res.data) })
-      .catch(err => { if (active) setError(err?.message ?? 'Failed to load cart') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [])
+  const { data: cart, setData: setCart, loading, error, setError } = useFetch<Cart>(
+    () => getCart().then(res => res.data),
+    [],
+    { errorFallback: 'Failed to load cart' },
+  )
 
   const removeItem = async (itemId: number) => {
     try {
-      const res = await api.delete(`/api/orders/cart/remove/${itemId}/`)
+      const res = await removeCartItem(itemId)
       setCart(res.data)
     } catch (err: any) {
       setError(err?.message ?? 'Failed to remove item')
@@ -64,19 +59,19 @@ export default function CartPage() {
   if (error) return <section className="container"><div className="card">{error}</div></section>
 
   return (
-    <section className="container fade-in" style={{paddingTop:24, paddingBottom:24}}>
-      <h2 style={{marginTop:0}}>Shopping Cart</h2>
+    <section className="container fade-in section-pad">
+      <h2 className="mt-0">Shopping Cart</h2>
       {/* Header summary like Cinemark */}
-      <div className="card" style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 18px', marginBottom:16}}>
-        <div style={{fontWeight:700}}>{(cart?.items?.length || 0)} Item{(cart?.items?.length||0)===1?'':'s'} in Cart</div>
-        <button className="btn primary" disabled={!cart || cart.items.length===0} onClick={() => navigate('/checkout')} style={{minWidth:160}}>Checkout</button>
+      <div className="card cart-summaryBar">
+        <div className="cart-summaryCount">{(cart?.items?.length || 0)} Item{(cart?.items?.length||0)===1?'':'s'} in Cart</div>
+        <button className="btn primary cart-checkoutBtn" disabled={!cart || cart.items.length===0} onClick={() => navigate('/checkout')}>Checkout</button>
       </div>
 
       {(!cart || cart.items.length === 0) ? (
-        <div className="card" style={{opacity:0.9}}>Your cart is empty. <Link to="/showtimes">Find showtimes</Link></div>
+        <div className="card cart-emptyCard">Your cart is empty. <Link to="/showtimes">Find showtimes</Link></div>
       ) : (
         <>
-          <div className="card" style={{marginBottom:12}}><strong>Order Summary</strong></div>
+          <div className="card mb-12"><strong>Order Summary</strong></div>
           {groups.map(([showtimeId, group]) => {
             const info = group.info
             const groupTotal = group.items.reduce((acc, it) => acc + (typeof it.unit_price === 'number' ? it.unit_price : parseFloat(String(it.unit_price))), 0)
@@ -84,24 +79,24 @@ export default function CartPage() {
             const timeStr = dt ? dt.toLocaleString([], { timeStyle: 'short', dateStyle: 'medium' }) : ''
             const seatList = group.items.map(i => i.seat_label).join(', ')
             return (
-              <div key={showtimeId} className="card" style={{display:'grid', gridTemplateColumns:'120px 1fr 140px', gap:18, alignItems:'center', marginBottom:14}}>
+              <div key={showtimeId} className="card cart-itemRow">
                 <div>
                   {info?.movie_image ? (
-                    <img src={imageUrl(info.movie_image)} alt={info.movie_title} style={{width:'100%', height:150, objectFit:'cover', borderRadius:12}} />
+                    <img src={imageUrl(info.movie_image)} alt={info.movie_title} className="cart-itemPoster" />
                   ) : (
-                    <div className="card" style={{height:150, display:'grid', placeItems:'center'}}>No image</div>
+                    <div className="card cart-itemPosterPlaceholder">No image</div>
                   )}
                 </div>
                 <div>
-                  <div style={{display:'flex', alignItems:'baseline', gap:10}}>
-                    <h3 style={{margin:'0 0 4px 0'}}>{info?.movie_title || 'Movie'}</h3>
+                  <div className="cart-itemTitleRow">
+                    <h3 className="cart-itemTitle">{info?.movie_title || 'Movie'}</h3>
                     <span className="chip">Ticket ({group.items.length})</span>
                   </div>
-                  <div style={{opacity:0.85}}>{info?.theater_name} — {info?.screen_name}</div>
-                  <div style={{marginTop:6}}>{timeStr}</div>
-                  <div style={{marginTop:10}}>
-                    <div style={{opacity:0.85}}><small>Seats: {seatList}</small></div>
-                    <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
+                  <div className="opacity-85">{info?.theater_name} — {info?.screen_name}</div>
+                  <div className="mt-6">{timeStr}</div>
+                  <div className="mt-10">
+                    <div className="opacity-85"><small>Seats: {seatList}</small></div>
+                    <div className="cart-itemSeatChips">
                       {group.items.map(it => (
                         <button key={it.id} className="chip" title={`Remove ${it.seat_label}`} onClick={() => removeItem(it.id)}>
                           {it.seat_label} ✕
@@ -110,16 +105,16 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <div style={{textAlign:'right'}}>
-                  <div style={{fontWeight:700, fontSize:18}}>${groupTotal.toFixed(2)}</div>
+                <div className="text-right">
+                  <div className="cart-itemPriceValue">${groupTotal.toFixed(2)}</div>
                 </div>
               </div>
             )
           })}
 
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <div className="cart-subtotalRow">
             <div><strong>Subtotal:</strong> ${subtotal.toFixed(2)}</div>
-            <button className="btn primary" onClick={() => navigate('/checkout')} style={{minWidth:160}}>Checkout</button>
+            <button className="btn primary cart-checkoutBtn" onClick={() => navigate('/checkout')}>Checkout</button>
           </div>
         </>
       )}

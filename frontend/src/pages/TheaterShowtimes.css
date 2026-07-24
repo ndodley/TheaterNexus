@@ -1,0 +1,7 @@
+/* Theater Showtimes page.
+   Most of this page's visual classes come from components/AdvancedSearchPanel.css,
+   styles/dateTabs.css, styles/mediaGrid.css, and styles/showtimeCard.css
+   (the last shared identically with Showtimes). This file holds the
+   Theater Showtimes-only header/address block. */
+.theaterShowtimes-heading { margin: 8px 0 4px; }
+.theaterShowtimes-address { opacity: 0.8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }

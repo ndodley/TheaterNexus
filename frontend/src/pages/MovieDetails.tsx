@@ -1,16 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { api, imageUrl } from '../api'
-import type { Movie, ShowTime, Review, ReviewSummary } from '../types'
+import { useParams, Link } from 'react-router-dom'
+import { imageUrl } from '../api'
+import { getMovie } from '../api/movies'
+import { getShowtimes } from '../api/showtimes'
+import { getMovieReviews, getMovieReviewSummary, createReview, updateReview, deleteReview as deleteReviewApi } from '../api/reviews'
+import type { Review, ReviewSummary, ShowTime } from '../types'
 import { useAuth } from '../auth/AuthContext'
+import { useFetch } from '../hooks/useFetch'
+import { useFavoriteToggle } from '../hooks/useFavoriteToggle'
+import '../styles/dateTabs.css'
+import '../styles/showtimeCard.css'
+import './MovieDetails.css'
 
 export default function MovieDetailsPage() {
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const [movie, setMovie] = useState<Movie | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [showtimes, setShowtimes] = useState<ShowTime[]>([])
+  const { toggleFavorite: toggleFavoriteBase } = useFavoriteToggle()
+  const { data: movie, setData: setMovie, error } = useFetch(
+    () => getMovie(id as string).then(res => res.data),
+    [id],
+  )
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date()
     const pad = (n: number) => String(n).padStart(2, '0')
@@ -31,52 +40,41 @@ export default function MovieDetailsPage() {
   const [editTitle, setEditTitle] = useState<string>('')
   const [editContent, setEditContent] = useState<string>('')
 
-  useEffect(() => {
-    if (!id) return
-    api.get(`/api/movies/${id}/`).then(res => setMovie(res.data)).catch(err => setError(err?.message ?? 'Failed to load'))
-  }, [id])
   async function toggleFavorite() {
     if (!id || !movie) return
-    try {
-      if (movie.is_favorite) {
-        await api.delete(`/api/movies/${id}/favorite/`)
-      } else {
-        await api.post(`/api/movies/${id}/favorite/`)
-      }
-      setMovie({ ...movie, is_favorite: !movie.is_favorite })
-    } catch (err: any) {
-      if (err?.response?.status === 401) navigate('/login')
-    }
+    await toggleFavoriteBase(Number(id), movie.is_favorite, (next) => {
+      setMovie(prev => prev ? { ...prev, is_favorite: next } : prev)
+    })
   }
 
-  useEffect(() => {
-    if (!id) return
+  const { data: showtimes = [] } = useFetch(() => {
     const params: Record<string, string> = { movie: String(id), date: selectedDate }
     if (selectedTheater !== 'all') params.theater = String(selectedTheater)
-    api.get('/api/showtimes/', { params })
-      .then(res => setShowtimes(res.data))
-      .catch(() => {})
+    return getShowtimes(params).then(res => res.data)
   }, [id, selectedDate, selectedTheater])
 
   // Load reviews list and summary
   useEffect(() => {
     if (!id) return
-    api.get(`/api/reviews/movies/${id}/`).then(res => setReviews(res.data)).catch(() => setReviews([]))
-    api.get(`/api/reviews/movies/${id}/summary/`).then(res => setSummary(res.data)).catch(() => setSummary({ movie_id: Number(id), average_rating: 0, count: 0 }))
+    getMovieReviews(id).then(res => setReviews(res.data)).catch(() => setReviews([]))
+    getMovieReviewSummary(id).then(res => setSummary(res.data)).catch(() => setSummary({ movie_id: Number(id), average_rating: 0, count: 0 }))
   }, [id])
 
+  async function refreshReviews() {
+    if (!id) return
+    const list = await getMovieReviews(id)
+    setReviews(list.data)
+    const s = await getMovieReviewSummary(id)
+    setSummary(s.data)
+  }
 
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!id || !isAuthenticated) return
     setSubmitting(true)
     try {
-      const payload = { rating: draftRating, title: draftTitle, content: draftContent }
-      await api.post(`/api/reviews/movies/${id}/`, payload)
-      const list = await api.get(`/api/reviews/movies/${id}/`)
-      setReviews(list.data)
-      const s = await api.get(`/api/reviews/movies/${id}/summary/`)
-      setSummary(s.data)
+      await createReview(id, { rating: draftRating, title: draftTitle, content: draftContent })
+      await refreshReviews()
       setDraftRating(5)
       setDraftTitle('')
       setDraftContent('')
@@ -89,11 +87,8 @@ export default function MovieDetailsPage() {
     if (!id || !isAuthenticated) return
     setSubmitting(true)
     try {
-      await api.delete(`/api/reviews/${reviewId}/`)
-      const list = await api.get(`/api/reviews/movies/${id}/`)
-      setReviews(list.data)
-      const s = await api.get(`/api/reviews/movies/${id}/summary/`)
-      setSummary(s.data)
+      await deleteReviewApi(reviewId)
+      await refreshReviews()
     } finally {
       setSubmitting(false)
     }
@@ -110,12 +105,8 @@ export default function MovieDetailsPage() {
     if (!id || !isAuthenticated || !editingId) return
     setSubmitting(true)
     try {
-      const payload = { rating: editRating, title: editTitle, content: editContent }
-      await api.put(`/api/reviews/${reviewId}/`, payload)
-      const list = await api.get(`/api/reviews/movies/${id}/`)
-      setReviews(list.data)
-      const s = await api.get(`/api/reviews/movies/${id}/summary/`)
-      setSummary(s.data)
+      await updateReview(reviewId, { rating: editRating, title: editTitle, content: editContent })
+      await refreshReviews()
       setEditingId(null)
     } finally {
       setSubmitting(false)
@@ -153,27 +144,26 @@ export default function MovieDetailsPage() {
   if (!movie) return <section className="container"><div className="card">Loading…</div></section>
 
   return (
-    <section className="container fade-in" style={{paddingTop: 24, paddingBottom: 24}}>
-      <Link to="/movies" style={{display:'inline-block', marginBottom:12}}>← Back to Movies</Link>
+    <section className="container fade-in section-pad">
+      <Link to="/movies" className="back-link">← Back to Movies</Link>
       <div className="card details-grid">
         {(movie.image_url || movie.image) && (
-          <img src={imageUrl(movie.image_url || movie.image)} alt={movie.title} style={{width:'100%', height:360, objectFit:'cover', borderRadius:12}} />
+          <img src={imageUrl(movie.image_url || movie.image)} alt={movie.title} className="movieDetails-poster" />
         )}
         <div>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <h2 style={{marginTop:0}}>{movie.title}</h2>
+          <div className="showtimeCard-titleRow">
+            <h2 className="mt-0">{movie.title}</h2>
             <button
-              className="btn btn-ghost"
+              className="btn btn-ghost showtimeCard-favBtn"
               title={movie.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
               onClick={toggleFavorite}
               aria-label={movie.is_favorite ? 'Unfavorite' : 'Favorite'}
-              style={{display:'flex', alignItems:'center', gap:6}}
             >
               <span role="img" aria-label="favorite">{movie.is_favorite ? '❤️' : '🤍'}</span>
             </button>
           </div>
-          <p style={{opacity:0.9}}>{movie.plot_summary || 'No summary available.'}</p>
-          <div style={{marginTop:12, display:'flex', gap:8, flexWrap:'wrap'}}>
+          <p className="opacity-9">{movie.plot_summary || 'No summary available.'}</p>
+          <div className="movieDetails-genresRow">
             {movie.genres.map(g => <span key={g.id} className="badge">{g.name}</span>)}
           </div>
           {(() => {
@@ -181,7 +171,7 @@ export default function MovieDetailsPage() {
             const releaseStr = movie.release_date ? (() => { const d = new Date(String(movie.release_date)); return isNaN(d.getTime()) ? movie.release_date : d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) })() : 'TBA'
             const availability = (movie.availability_status || '').replace(/_/g, ' ')
             return (
-              <div className="kv-grid" style={{marginTop:16}}>
+              <div className="kv-grid mt-16">
                 <div className="kv-item">
                   <span className="kv-icon" aria-hidden>⏱️</span>
                   <div className="kv-content">
@@ -200,7 +190,7 @@ export default function MovieDetailsPage() {
                   <span className="kv-icon" aria-hidden>🎬</span>
                   <div className="kv-content">
                     <small className="kv-label">Availability</small>
-                    <div className="kv-value" style={{textTransform:'capitalize'}}>{availability || '—'}</div>
+                    <div className="kv-value movieDetails-capitalize">{availability || '—'}</div>
                   </div>
                 </div>
                 <div className="kv-item">
@@ -221,11 +211,11 @@ export default function MovieDetailsPage() {
               </div>
             )
           })()}
-          <div style={{marginTop:16}}>
-            <Link to="/movies"><button style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>Back to Movies</button></Link>
+          <div className="mt-16">
+            <Link to="/movies"><button className="btn-solid-primary">Back to Movies</button></Link>
           </div>
-          <div style={{marginTop:24}}>
-            <h3 style={{margin:'0 0 8px'}}>Showtimes</h3>
+          <div className="mt-24">
+            <h3 className="movieDetails-sectionHeading">Showtimes</h3>
             {/* Date tabs like Cinemark */}
             <div className="tabs" aria-label="Choose a date">
               {(() => {
@@ -241,7 +231,7 @@ export default function MovieDetailsPage() {
                   const isActive = selectedDate === value
                   out.push(
                     <button key={value} className={`tab-btn ${isActive ? 'active' : ''}`} onClick={() => setSelectedDate(value)}>
-                      <div style={{fontWeight: isActive ? 800 : 600}}>{i === 0 ? 'Today' : weekday}</div>
+                      <div className="dateTab-label">{i === 0 ? 'Today' : weekday}</div>
                       <small>{mmdd}</small>
                     </button>
                   )
@@ -251,7 +241,7 @@ export default function MovieDetailsPage() {
             </div>
 
             {/* Theater chips (optional filter), default All */}
-            <div className="chip-row" style={{margin:'12px 0'}}>
+            <div className="chip-row movieDetails-chipRow">
               <button className={`chip ${selectedTheater === 'all' ? 'active' : ''}`} onClick={() => setSelectedTheater('all')}>All Theaters</button>
               {theaters.map(t => (
                 <button key={t.id} className={`chip ${selectedTheater === t.id ? 'active' : ''}`} onClick={() => setSelectedTheater(t.id)}>{t.name}</button>
@@ -265,16 +255,16 @@ export default function MovieDetailsPage() {
               const screens = groupedByTheater.get(t.id)
               const totalCount = screens ? Array.from(screens.values()).reduce((acc, arr) => acc + arr.length, 0) : 0
               return (
-                <div key={t.id} className="card" style={{padding:12, marginBottom:12}}>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
+                <div key={t.id} className="card movieDetails-theaterCard">
+                  <div className="flex-between-baseline">
                     <strong>{t.name}</strong>
-                    <small style={{opacity:0.8}}>{totalCount} showtime{totalCount === 1 ? '' : 's'}</small>
+                    <small className="opacity-8">{totalCount} showtime{totalCount === 1 ? '' : 's'}</small>
                   </div>
                   {/* Render each screen under the theater with its time chips */}
                   {screens && Array.from(screens.entries()).map(([screenId, arr]) => (
-                    <div key={screenId} style={{marginTop:8}}>
-                      <div style={{fontWeight:600, opacity:0.9}}>{arr[0]?.screen_name || 'Screen'}</div>
-                      <div style={{marginTop:6, display:'flex', flexWrap:'wrap', gap:8}}>
+                    <div key={screenId} className="mt-8">
+                      <div className="movieDetails-screenName">{arr[0]?.screen_name || 'Screen'}</div>
+                      <div className="showtimeCard-timesRow">
                             {arr.map(s => {
                           const start = new Date(s.start_time)
                           const end = s.end_time ? new Date(s.end_time) : null
@@ -294,11 +284,11 @@ export default function MovieDetailsPage() {
             })}
           </div>
           {/* Reviews Section */}
-          <div style={{marginTop:24}}>
-            <h3 style={{margin:'0 0 8px'}}>Reviews</h3>
+          <div className="mt-24">
+            <h3 className="movieDetails-sectionHeading">Reviews</h3>
             {isAuthenticated ? (
-              <form onSubmit={submitReview} className="card" style={{padding:12, marginBottom:12}}>
-                <div style={{display:'grid', gridTemplateColumns:'120px 1fr', gap:12, alignItems:'center'}}>
+              <form onSubmit={submitReview} className="card movieDetails-card12">
+                <div className="movieDetails-fieldGrid">
                   <label htmlFor="rating"><strong>Rating</strong></label>
                   <select id="rating" value={draftRating} onChange={e => setDraftRating(parseInt(e.target.value))}>
                     {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} ⭐</option>)}
@@ -308,39 +298,39 @@ export default function MovieDetailsPage() {
                   <label htmlFor="content"><strong>Review</strong></label>
                   <textarea id="content" value={draftContent} onChange={e => setDraftContent(e.target.value)} placeholder="Share your thoughts" rows={4} />
                 </div>
-                <div style={{marginTop:12, display:'flex', gap:8}}>
-                  <button type="submit" disabled={submitting} style={{ backgroundColor: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}>
+                <div className="movieDetails-actionsRow">
+                  <button type="submit" disabled={submitting} className="btn-solid-primary">
                     Post Review
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="card" style={{padding:12, marginBottom:12}}>
+              <div className="card movieDetails-card12">
                 <div>Please log in to post a review.</div>
               </div>
             )}
 
-            {reviews.length === 0 && <div className="card" style={{padding:12}}>No reviews yet.</div>}
+            {reviews.length === 0 && <div className="card movieDetails-cardPad12">No reviews yet.</div>}
             {reviews.map(rv => (
-              <div key={rv.id} className="card" style={{padding:12, marginBottom:8}}>
-                <div style={{display:'flex', justifyContent:'space-between'}}>
+              <div key={rv.id} className="card movieDetails-reviewCard">
+                <div className="movieDetails-reviewHeader">
                   <strong>{rv.title || 'Untitled'}</strong>
                   <span>{'⭐'.repeat(Math.max(1, Math.min(5, rv.rating)))}</span>
                 </div>
-                <small style={{opacity:0.8}}>
+                <small className="opacity-8">
                   by {rv.user_email || rv.user_name} • {new Date(rv.created_at).toLocaleString()}
                   {rv.updated_at !== rv.created_at ? ` • edited ${new Date(rv.updated_at).toLocaleString()}` : ''}
                 </small>
-                <p style={{marginTop:8}}>{rv.content}</p>
+                <p className="mt-8">{rv.content}</p>
                 {user && rv.user === user.id && (
-                  <div style={{display:'flex', gap:8, marginTop:8}}>
-                    <button onClick={() => startEdit(rv)} style={{ backgroundColor: '#eef', color: '#333' }}>Edit</button>
-                    <button onClick={() => deleteReview(rv.id)} style={{ backgroundColor: '#eee', color: '#333' }}>Delete</button>
+                  <div className="movieDetails-editActionsRow">
+                    <button onClick={() => startEdit(rv)} className="movieDetails-editBtn">Edit</button>
+                    <button onClick={() => deleteReview(rv.id)} className="btn-solid-muted">Delete</button>
                   </div>
                 )}
                 {editingId === rv.id && (
-                  <div className="card" style={{padding:12, marginTop:8}}>
-                    <div style={{display:'grid', gridTemplateColumns:'120px 1fr', gap:12, alignItems:'center'}}>
+                  <div className="card movieDetails-editCard">
+                    <div className="movieDetails-fieldGrid">
                       <label><strong>Rating</strong></label>
                       <select value={editRating} onChange={e => setEditRating(parseInt(e.target.value))}>
                         {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} ⭐</option>)}
@@ -350,9 +340,9 @@ export default function MovieDetailsPage() {
                       <label><strong>Review</strong></label>
                       <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} />
                     </div>
-                    <div style={{marginTop:8, display:'flex', gap:8}}>
-                      <button onClick={() => saveEdit(rv.id)} disabled={submitting} style={{ backgroundColor: 'var(--primary)', color: '#fff' }}>Save</button>
-                      <button onClick={() => setEditingId(null)} style={{ backgroundColor: '#eee', color: '#333' }}>Cancel</button>
+                    <div className="movieDetails-editActionsRow">
+                      <button onClick={() => saveEdit(rv.id)} disabled={submitting} className="movieDetails-saveBtn">Save</button>
+                      <button onClick={() => setEditingId(null)} className="btn-solid-muted">Cancel</button>
                     </div>
                   </div>
                 )}

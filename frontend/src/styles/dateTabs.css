@@ -1,0 +1,45 @@
+/* Cinemark-like date tabs, shared by Showtimes, TheaterShowtimes, MovieDetails */
+.tabs {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  border-bottom: 2px solid var(--border);
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 6px;
+  color: var(--text);
+  border-bottom: 3px solid transparent;
+}
+.tab-btn.active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+.tab-btn small { opacity: 0.75; display: block; }
+/* Date-tab weekday/"Today" label: bolder when its tab is active (state comes from
+   the already-applied .tab-btn.active on the parent button, not a JS ternary) */
+.dateTab-label { font-weight: 600; }
+.tab-btn.active .dateTab-label { font-weight: 800; }
+/* Extra spacing variant used by Showtimes and TheaterShowtimes */
+.tabs--gapped { margin-bottom: 12px; }
+
+/* Theater chips row (MovieDetails) */
+.chip-row { display: flex; gap: 8px; overflow-x: auto; }
+
+/* Time chips */
+.time-chip {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.time-chip:hover { border-color: var(--primary); }
+
+@media (max-width: 700px) {
+  .time-chip { padding: 10px 16px; }
+  .tabs { gap: 10px; }
+  .chip-row { gap: 6px; }
+}

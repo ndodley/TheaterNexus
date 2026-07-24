@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
+import '../styles/authShell.css'
+import './Login.css'
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth()
@@ -74,7 +76,7 @@ export default function LoginPage() {
 
           {error && <div className="error" role="alert">{error}</div>}
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ justifyContent: 'center' }}>
+          <button type="submit" className="btn btn-primary auth-btn--center" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>

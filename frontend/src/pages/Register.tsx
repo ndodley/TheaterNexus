@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import GoogleSignInButton from '../auth/GoogleSignInButton'
+import '../styles/authShell.css'
+import './Register.css'
 
 export default function RegisterPage() {
+  
   const { register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -16,12 +19,20 @@ export default function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null); setLoading(true)
+    
     try {
       const form = new FormData()
       form.append('email', email.trim())
       form.append('password', password)
-      if (firstName) form.append('first_name', firstName)
-      if (lastName) form.append('last_name', lastName)
+
+      if (firstName) { 
+        form.append('first_name', firstName) 
+      }
+
+      if (lastName) { 
+        form.append('last_name', lastName) 
+      }
+
       await register(form)
       navigate('/welcome?new=1')
     } catch (err: any) {
@@ -33,13 +44,13 @@ export default function RegisterPage() {
 
   return (
     <section className="auth-shell">
-      <div className="card auth-card slide-up" style={{ width: 'min(560px, 100%)' }}>
+      <div className="card auth-card slide-up register-card">
         <header className="auth-header">
           <h1 className="auth-title">Create your account</h1>
           <p className="auth-subtitle">Sign up to save favorites, leave reviews, and checkout faster.</p>
         </header>
 
-        <div className="provider-grid" style={{ maxWidth: 420 }}>
+        <div className="provider-grid register-providerGrid">
           <GoogleSignInButton
             mode="signup"
             onCredential={async (credential) => {
@@ -88,13 +99,13 @@ export default function RegisterPage() {
               required
             />
           </label>
-          <small style={{ opacity: 0.75 }}>
+          <small className="register-passwordHint">
             Password must be at least 8 characters.
           </small>
 
           {error && <div className="error" role="alert">{error}</div>}
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ justifyContent: 'center' }}>
+          <button type="submit" className="btn btn-primary auth-btn--center" disabled={loading}>
             {loading ? 'Creating…' : 'Create account'}
           </button>
         </form>

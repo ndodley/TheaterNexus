@@ -1,0 +1,5 @@
+/* GoogleSignInButton component (moved out of inline styles) */
+.googleSignIn-wrap { display: grid; gap: 8px; }
+.googleSignIn-connecting { opacity: 0.8; }
+.googleSignIn-errorCard { padding: 12px; }
+.googleSignIn-errorText { margin-bottom: 6px; }

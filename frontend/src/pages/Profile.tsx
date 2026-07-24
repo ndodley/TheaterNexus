@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../auth/AuthContext.tsx'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getMe, patchMe, uploadAvatar, removeAvatar } from '../api/auth'
+import './Profile.css'
 
 export default function ProfilePage() {
   const { user, refreshMe } = useAuth()
@@ -21,11 +23,11 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <section className="container" style={{paddingTop:24, paddingBottom:24}}>
-        <div className="card" style={{padding:16}}>
-          <h2 style={{marginTop:0}}>Profile</h2>
+      <section className="container section-pad">
+        <div className="card profile-notSignedInCard">
+          <h2 className="mt-0">Profile</h2>
           <p>You are not signed in.</p>
-          <div style={{marginTop:12, display:'flex', gap:8}}>
+          <div className="profile-notSignedInActions">
             <Link to="/login" className="btn btn-primary">Sign in</Link>
             <Link to="/register" className="btn btn-ghost">Create account</Link>
           </div>
@@ -36,7 +38,7 @@ export default function ProfilePage() {
 
   async function loadMe() {
     try {
-      const { data } = await api.get('/api/auth/me/')
+      const { data } = await getMe()
       setProfile(data)
       setForm({
         first_name: data?.first_name || '',
@@ -50,9 +52,7 @@ export default function ProfilePage() {
   async function onUploadAvatar(file: File) {
     setUploading(true)
     try {
-      const form = new FormData()
-      form.append('avatar', file)
-      await api.put('/api/auth/avatar/', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+      await uploadAvatar(file)
       await loadMe()
       await refreshMe()
     } finally {
@@ -63,7 +63,7 @@ export default function ProfilePage() {
   async function onRemoveAvatar() {
     setUploading(true)
     try {
-      await api.delete('/api/auth/avatar/')
+      await removeAvatar()
       await loadMe()
       await refreshMe()
     } finally {
@@ -82,7 +82,7 @@ export default function ProfilePage() {
         phone_number: form.phone_number,
         date_of_birth: form.date_of_birth || null,
       }
-      const { data } = await api.patch('/api/auth/me/', payload)
+      const { data } = await patchMe(payload)
       setProfile(data)
       setEditing(false)
       await refreshMe()
@@ -99,15 +99,15 @@ export default function ProfilePage() {
   }, [])
 
   return (
-    <section className="container fade-in" style={{ paddingTop: 24, paddingBottom: 24 }}>
+    <section className="container fade-in section-pad">
       <div className="profileLayout">
         <div className="profileSidebar">
           {avatarSrc ? (
             <img className="profileAvatar" src={avatarSrc} alt={profile?.username || ''} />
           ) : null}
           <div className="profileAvatarActions">
-            <label className="btn btn-ghost" style={{cursor:'pointer'}}>
-              <input type="file" accept="image/*" style={{display:'none'}} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUploadAvatar(f) }} />
+            <label className="btn btn-ghost profile-uploadLabel">
+              <input type="file" accept="image/*" className="profile-hiddenFileInput" onChange={(e) => { const f = e.target.files?.[0]; if (f) onUploadAvatar(f) }} />
               {uploading ? 'Uploading…' : 'Upload Photo'}
             </label>
             {profile?.avatar && (
@@ -136,7 +136,7 @@ export default function ProfilePage() {
           </div>
 
           {error ? (
-            <div className="card" style={{ padding: 12, borderColor: 'rgba(239,68,68,0.35)' }}>{error}</div>
+            <div className="card profile-errorCard">{error}</div>
           ) : null}
 
           <div className="profileGrid">

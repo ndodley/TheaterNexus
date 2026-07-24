@@ -1,0 +1,17 @@
+/* Movie results grid + card, shared identically by Movies and Favorites */
+.movies-headingIcon { margin-right: 8px; }
+
+.movieGrid-card {
+  display: block;
+  overflow: hidden;
+  transition: transform 180ms ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.movieGrid-poster { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; }
+.movieGrid-body { padding-top: 12px; }
+.movieGrid-titleRow { display: flex; justify-content: space-between; align-items: center; }
+.movieGrid-title { margin: 0 0 6px; }
+.movieGrid-favBtn { display: flex; align-items: center; gap: 6px; }
+.movieGrid-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.movieGrid-chips { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
