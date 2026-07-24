@@ -1,0 +1,9 @@
+/* Orders History page (moved out of OrdersHistory.tsx inline styles) */
+.ordersHistory-list { list-style: none; padding: 0; }
+.ordersHistory-row {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ordersHistory-rowRight { display: flex; gap: 12px; align-items: center; }

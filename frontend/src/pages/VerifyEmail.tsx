@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api } from '../api'
+import { verifyEmail } from '../api/auth'
+import '../styles/authShell.css'
+import './VerifyEmail.css'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -27,7 +29,7 @@ export default function VerifyEmailPage() {
       setMessage('Verifying your email…')
 
       try {
-        await api.post('/api/auth/verify-email/', { token })
+        await verifyEmail(token)
         if (!active) return
         setStatus('success')
         setMessage('Email verified! Your account is ready.')
@@ -45,49 +47,31 @@ export default function VerifyEmailPage() {
 
   return (
     <section className="auth-shell">
-      <div className="card auth-card slide-up" style={{ maxWidth: 560 }}>
+      <div className="card auth-card slide-up verifyEmail-card">
         <header className="auth-header">
           <h1 className="auth-title">Verify your email</h1>
           <p className="auth-subtitle">One last step to finish setting up your account.</p>
         </header>
 
-        <div className="card" style={{ background: '#f8fafc', borderColor: '#e5e7eb' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="card verifyEmail-statusBanner">
+          <div className="verifyEmail-statusRow">
             <div
               aria-hidden="true"
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                display: 'grid',
-                placeItems: 'center',
-                background:
-                  status === 'success'
-                    ? 'rgba(34,197,94,0.12)'
-                    : status === 'error'
-                      ? 'rgba(239,68,68,0.10)'
-                      : 'rgba(99,102,241,0.10)',
-                border:
-                  status === 'success'
-                    ? '1px solid rgba(34,197,94,0.25)'
-                    : status === 'error'
-                      ? '1px solid rgba(239,68,68,0.20)'
-                      : '1px solid rgba(99,102,241,0.22)',
-              }}
+              className={`verifyEmail-statusIcon verifyEmail-statusIcon--${status === 'success' ? 'success' : status === 'error' ? 'error' : 'loading'}`}
             >
               {status === 'success' ? (
-                <span style={{ fontWeight: 900, color: '#16a34a' }}>✓</span>
+                <span className="verifyEmail-statusGlyph--success">✓</span>
               ) : status === 'error' ? (
-                <span style={{ fontWeight: 900, color: '#ef4444' }}>!</span>
+                <span className="verifyEmail-statusGlyph--error">!</span>
               ) : (
-                <span style={{ fontWeight: 900, color: '#4f46e5' }}>…</span>
+                <span className="verifyEmail-statusGlyph--loading">…</span>
               )}
             </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800 }}>{message}</div>
+            <div className="verifyEmail-statusBody">
+              <div className="verifyEmail-statusTitle">{message}</div>
               {status === 'loading' && (
-                <div style={{ opacity: 0.8, marginTop: 4, fontSize: 13 }}>
+                <div className="verifyEmail-statusSubtext">
                   This should only take a second.
                 </div>
               )}
@@ -95,22 +79,22 @@ export default function VerifyEmailPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div className="verifyEmail-actions">
           {status === 'success' ? (
-            <Link className="btn btn-primary" to="/" style={{ justifyContent: 'center' }}>
+            <Link className="btn btn-primary auth-btn--center" to="/">
               Continue
             </Link>
           ) : (
-            <Link className="btn btn-primary" to="/login" style={{ justifyContent: 'center' }}>
+            <Link className="btn btn-primary auth-btn--center" to="/login">
               Back to sign in
             </Link>
           )}
-          <Link className="btn" to="/" style={{ justifyContent: 'center' }}>
+          <Link className="btn auth-btn--center" to="/">
             Home
           </Link>
         </div>
 
-        <p className="auth-footer" style={{ textAlign: 'center' }}>
+        <p className="auth-footer auth-footer--center">
           Didn’t request this? You can ignore it.
         </p>
       </div>

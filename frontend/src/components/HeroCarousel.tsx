@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import './HeroCarousel.css'
 
 export type HeroSlide = {
   src?: string | null

@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api } from '../api'
+import { resendVerification, getVerificationLink } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
+import '../styles/authShell.css'
+import './Welcome.css'
 
 export default function WelcomePage() {
   const { user, refreshMe } = useAuth()
@@ -20,7 +22,7 @@ export default function WelcomePage() {
     setLoading(true)
     setStatus(null)
     try {
-      await api.post('/api/auth/resend-verification/', { email })
+      await resendVerification(email)
       setStatus({ kind: 'success', text: 'Verification email sent.' })
     } catch {
       setStatus({ kind: 'error', text: 'Could not send email right now.' })
@@ -33,7 +35,7 @@ export default function WelcomePage() {
     setLoading(true)
     setStatus(null)
     try {
-      const { data } = await api.get('/api/auth/verification-link/')
+      const { data } = await getVerificationLink()
       const token = data?.token as string | undefined
       if (!token) {
         setStatus({ kind: 'error', text: 'Could not generate a verification link.' })
@@ -62,7 +64,7 @@ export default function WelcomePage() {
 
   return (
     <section className="auth-shell">
-      <div className="card auth-card slide-up" style={{ maxWidth: 720 }}>
+      <div className="card auth-card slide-up welcome-card">
         <header className="auth-header">
           <h1 className="auth-title">Welcome{user?.first_name ? `, ${user.first_name}` : ''}</h1>
           <p className="auth-subtitle">
@@ -71,36 +73,26 @@ export default function WelcomePage() {
           </p>
         </header>
 
-        <div className="card" style={{ background: '#0b1220', color: '#e5e7eb', borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div className="card welcome-statusBanner">
+          <div className="welcome-statusRow">
             <div
               aria-hidden="true"
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 14,
-                display: 'grid',
-                placeItems: 'center',
-                background: emailVerified ? 'rgba(34,197,94,0.14)' : 'rgba(99,102,241,0.16)',
-                border: emailVerified ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(99,102,241,0.35)',
-                color: emailVerified ? '#bbf7d0' : '#c7d2fe',
-                fontWeight: 900,
-              }}
+              className={`welcome-statusIcon ${emailVerified ? 'welcome-statusIcon--verified' : 'welcome-statusIcon--pending'}`}
             >
               {emailVerified ? '✓' : '↗'}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 900, fontSize: 16 }}>
+            <div className="welcome-statusBody">
+              <div className="welcome-statusTitle">
                 {emailVerified ? 'Email verified' : 'Email verification available'}
               </div>
-              <div style={{ opacity: 0.85, marginTop: 2 }}>
+              <div className="welcome-statusEmail">
                 {email ? (
                   <>Email: <strong>{email}</strong></>
                 ) : (
                   <>No email on file.</>
                 )}
               </div>
-              <div style={{ opacity: 0.75, marginTop: 6, fontSize: 13 }}>
+              <div className="welcome-statusHint">
                 {!emailVerified ? (
                   <>Check your inbox (and spam/junk) for the verification email.</>
                 ) : (
@@ -113,20 +105,14 @@ export default function WelcomePage() {
 
         {status && (
           <div
-            className="card"
-            style={{
-              padding: 12,
-              borderColor:
-                status.kind === 'success' ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)',
-              background: status.kind === 'success' ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
-            }}
+            className={`card welcome-statusMsg ${status.kind === 'success' ? 'welcome-statusMsg--success' : 'welcome-statusMsg--error'}`}
             role="status"
           >
-            <div style={{ margin: 0, fontWeight: 700 }}>{status.text}</div>
+            <div className="welcome-statusMsgText">{status.text}</div>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="welcome-actions">
           {!emailVerified ? (
             <>
               <button className="btn btn-primary" onClick={verifyNow} disabled={loading || !email}>
@@ -151,7 +137,7 @@ export default function WelcomePage() {
           )}
         </div>
 
-        <p className="auth-footer" style={{ textAlign: 'center' }}>
+        <p className="auth-footer auth-footer--center">
           Want to see your account details? <Link to="/profile">Go to profile</Link>.
         </p>
       </div>

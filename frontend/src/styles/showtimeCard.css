@@ -1,0 +1,8 @@
+/* Movie-grouped showtime card, shared identically by Showtimes and TheaterShowtimes */
+.showtimeCard-article { padding: 16px; margin-bottom: 16px; cursor: pointer; }
+.showtimeCard-poster { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; }
+.showtimeCard-posterPlaceholder { height: 220px; display: grid; place-items: center; }
+.showtimeCard-titleRow { display: flex; justify-content: space-between; align-items: center; }
+.showtimeCard-favBtn { display: flex; align-items: center; gap: 6px; }
+.showtimeCard-chipsRow { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.showtimeCard-timesRow { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }

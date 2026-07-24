@@ -1,0 +1,20 @@
+/* Checkout page (moved out of Checkout.tsx inline styles) */
+.checkout-form { padding: 18px; }
+.checkout-formError { margin-top: 12px; background: #fee; }
+
+/* .checkout-backLink moved to shared .back-link in index.css */
+.checkout-grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.checkout-summaryCard { padding: 18px; }
+.checkout-summaryHeader { display: flex; align-items: center; justify-content: space-between; }
+.checkout-summaryTotals { display: flex; align-items: center; gap: 12px; }
+.checkout-totalValue { font-size: 16px; }
+.checkout-emptyNote { margin-top: 8px; opacity: 0.8; }
+.checkout-itemsList { display: flex; flex-direction: column; gap: 16px; margin-top: 12px; }
+.checkout-itemRow { display: flex; gap: 12px; }
+.checkout-itemPoster { width: 84px; height: 126px; object-fit: cover; border-radius: 8px; }
+.checkout-itemPosterPlaceholder { width: 84px; height: 126px; border-radius: 8px; background: #eee; }
+.checkout-itemTitle { font-weight: 600; }
+.checkout-itemMeta { opacity: 0.8; margin-top: 4px; }
+.checkout-itemChips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.checkout-itemTicketCount { margin-top: 8px; opacity: 0.8; }
+.checkout-itemTotal { margin-top: 4px; font-weight: 600; }

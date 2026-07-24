@@ -1,0 +1,7 @@
+/* Register page (moved from index.css; used only here) */
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px }
+
+/* Register-only overrides of the shared auth-card/provider-grid shell */
+.register-card { width: min(560px, 100%); }
+.register-providerGrid { max-width: 420px; }
+.register-passwordHint { opacity: 0.75; }

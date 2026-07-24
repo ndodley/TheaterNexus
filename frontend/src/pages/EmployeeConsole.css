@@ -1,0 +1,3 @@
+/* Employee Console page (moved out of EmployeeConsole.tsx inline styles) */
+.employeeConsole-page { max-width: 960px; }
+.employeeConsole-card { padding: 16px; margin-top: 12px; }

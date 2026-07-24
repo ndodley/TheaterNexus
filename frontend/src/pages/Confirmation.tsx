@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getOrder } from '../api/orders'
+import '../styles/orderItem.css'
+import '../styles/ticketChip.css'
+import './Confirmation.css'
 
 interface OrderItem {
   id: number
@@ -38,15 +42,15 @@ export default function ConfirmationPage() {
   useEffect(() => {
     let active = true
     if (!orderId) return
-    api.get(`/api/orders/${orderId}/`)
+    getOrder(orderId)
       .then(res => { if (active) setOrder(res.data) })
       .catch(err => { if (active) setError(err?.message ?? 'Failed to load order') })
     return () => { active = false }
   }, [orderId])
 
   return (
-    <section className="container fade-in" style={{paddingTop:24, paddingBottom:24}}>
-      <h2 style={{marginTop:0}}>Payment Successful</h2>
+    <section className="container fade-in section-pad">
+      <h2 className="mt-0">Payment Successful</h2>
       {error && <div className="card">{error}</div>}
       {!error && !order && <div className="card">Finalizing your order…</div>}
       {order && (
@@ -54,7 +58,7 @@ export default function ConfirmationPage() {
           <div>Order #{order.id} — <strong>{order.status.toUpperCase()}</strong></div>
 
           {/* Group items per showtime to mirror Order Details layout */}
-          <div style={{ display:'flex', flexDirection:'column', gap: 14, marginTop: 12 }}>
+          <div className="order-itemsGroup">
             {(order.items || []).reduce((acc: Array<{ key: string, items: OrderItem[] }>, it) => {
               const info = it.showtime_info || {}
               const key = [info.movie_title, info.start_time, info.screen_name, info.theater_name]
@@ -71,38 +75,38 @@ export default function ConfirmationPage() {
               const groupTotal = items.reduce((acc, it) => acc + (typeof it.unit_price === 'number' ? it.unit_price : parseFloat(String(it.unit_price))), 0)
               const movieId = info.movie_id
               const content = (
-                <div className="card" style={{ display:'grid', gridTemplateColumns:'100px 1fr 140px', gap: 14, alignItems:'center' }}>
+                <div className="card order-itemRow">
                   <div>
                     {info.movie_image ? (
-                      <img src={imageUrl(info.movie_image)} alt={info.movie_title || 'Poster'} style={{ width:'100%', height:130, objectFit:'cover', borderRadius:10 }} />
+                      <img src={imageUrl(info.movie_image)} alt={info.movie_title || 'Poster'} className="order-itemPoster" />
                     ) : (
-                      <div className="card" style={{ height:130, display:'grid', placeItems:'center' }}>No image</div>
+                      <div className="card order-itemPosterPlaceholder">No image</div>
                     )}
                   </div>
                   <div>
-                    <div style={{ display:'flex', alignItems:'baseline', gap: 8 }}>
-                      <h3 style={{ margin:'0 0 4px 0' }}>{info.movie_title || 'Movie'}</h3>
+                    <div className="order-itemTitleRow">
+                      <h3 className="order-itemTitle">{info.movie_title || 'Movie'}</h3>
                       <span className="chip">Ticket ({items.length})</span>
                     </div>
-                    <div style={{ opacity:0.85 }}>{info.theater_name || ''} {info.screen_name ? `• ${info.screen_name}` : ''}</div>
-                    {when && <div style={{ opacity:0.85 }}>{when}</div>}
-                    <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
+                    <div className="opacity-85">{info.theater_name || ''} {info.screen_name ? `• ${info.screen_name}` : ''}</div>
+                    {when && <div className="opacity-85">{when}</div>}
+                    <div className="order-itemChips">
                       {items.map(it => (
-                        <span key={it.id} className="chip" style={{ padding:'6px 10px', borderRadius:16, background:'#f3f4f6' }}>
+                        <span key={it.id} className="chip ticket-chip">
                           {it.seat_label ?? it.seat}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontWeight:700, fontSize:18 }}>${groupTotal.toFixed(2)}</div>
+                  <div className="order-itemPrice">
+                    <div className="order-itemPriceValue">${groupTotal.toFixed(2)}</div>
                   </div>
                 </div>
               )
               return (
                 <div key={key}>
                   {movieId ? (
-                    <Link to={`/movies/${movieId}`} style={{ textDecoration:'none', color:'inherit', display:'block' }}>
+                    <Link to={`/movies/${movieId}`} className="order-itemLink">
                       {content}
                     </Link>
                   ) : (
@@ -113,12 +117,12 @@ export default function ConfirmationPage() {
             })}
           </div>
 
-          <div style={{marginTop:12}}>
+          <div className="mt-12">
             <strong>Total:</strong> ${(
               typeof order.total === 'number' ? order.total : parseFloat(String(order.total))
             ).toFixed(2)} {order.currency.toUpperCase()}
           </div>
-          <div style={{marginTop:16}}>
+          <div className="mt-16">
             <Link to={'/orders'} className="btn">View Order History</Link>
           </div>
         </div>

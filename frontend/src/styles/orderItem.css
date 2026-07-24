@@ -1,0 +1,21 @@
+/* Per-showtime order/ticket line item, shared identically by Confirmation and OrderDetails */
+.order-itemsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+.order-itemRow {
+  display: grid;
+  grid-template-columns: 100px 1fr 140px;
+  gap: 14px;
+  align-items: center;
+}
+.order-itemPoster { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
+.order-itemPosterPlaceholder { height: 130px; display: grid; place-items: center; }
+.order-itemTitleRow { display: flex; align-items: baseline; gap: 8px; }
+.order-itemTitle { margin: 0 0 4px 0; }
+.order-itemChips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.order-itemPrice { text-align: right; }
+.order-itemPriceValue { font-weight: 700; font-size: 18px; }
+.order-itemLink { text-decoration: none; color: inherit; display: block; }

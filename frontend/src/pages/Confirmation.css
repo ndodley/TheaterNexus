@@ -1,0 +1,6 @@
+/* Confirmation page.
+   All of this page's visual classes come from the global index.css atoms
+   (.container/.card/.btn/.fade-in/.section-pad/.mt-*/.opacity-*) plus the
+   shared styles/orderItem.css and styles/ticketChip.css (used identically
+   by OrderDetails). This file is the home for any future
+   Confirmation-only styling. */

@@ -2,7 +2,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle.tsx'
 import { useAuth, adminUrl } from '../auth/AuthContext.tsx'
 import { useEffect, useRef, useState } from 'react'
-import { imageUrl } from '../api.ts'
+import { imageUrl } from '../api'
+import './Navbar.css'
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
@@ -33,10 +34,10 @@ export default function Navbar() {
   }, [isAccountOpen])
 
   return (
-    <nav className="nav" style={{ background: 'var(--nav-bg)' }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)', position:'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link to="/" className="logo" style={{ fontWeight: 800, fontSize: 20, color: 'var(--nav-text)' }} aria-label="Theater Nexus Home">Theater Nexus</Link>
+    <nav className="nav">
+      <div className="container navbar-topRow">
+        <div className="navbar-brandGroup">
+          <Link to="/" className="logo navbar-logoLink" aria-label="Theater Nexus Home">Theater Nexus</Link>
           <div className="nav-links">
             <NavLink to="/movies" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <span className="mi-icon" aria-hidden>🎬</span><span>Movies</span>
@@ -54,7 +55,7 @@ export default function Navbar() {
           </button>
 
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="navbar-actions">
           {user?.role === 'admin' && (
             <a href={adminUrl()} target="_blank" rel="noreferrer" className="nav-link">Admin</a>
           )}
@@ -72,29 +73,27 @@ export default function Navbar() {
                 <NavLink to="/cart" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} cart-link`} title="Cart">
                   <span className="mi-icon" aria-hidden>🛒</span><span>Cart</span>
                 </NavLink>
-                <div ref={menuRef} className="account-menu" style={{ position:'relative', zIndex: 10000 }}>
+                <div ref={menuRef} className="account-menu">
                   <button
                     className="account-toggle"
                     aria-haspopup="menu"
                     aria-expanded={isAccountOpen}
                     onClick={() => setIsAccountOpen(v => !v)}
                     title="My Account"
-                    style={{ display:'inline-flex', alignItems:'center', gap:10 }}
                   >
                     {(() => {
                       const avatarSrc = user?.avatar_url ? imageUrl(user.avatar_url) : (user?.avatar ? imageUrl(user.avatar) : imageUrl('/media/default_poster/default_avatar.jpg'))
                       return (
-                        <img src={avatarSrc} alt={user?.username || ''} style={{ width:28, height:28, borderRadius:'50%', objectFit:'cover', boxShadow:'var(--shadow)' }} />
+                        <img src={avatarSrc} alt={user?.username || ''} className="navbar-avatar" />
                       )
                     })()}
-                    <span style={{ color:'var(--nav-text)', fontWeight:700 }}>{user.first_name || user.username}</span>
+                    <span className="navbar-username">{user.first_name || user.username}</span>
                     <span className="caret" aria-hidden>▾</span>
                   </button>
                   {isAccountOpen && (
                     <div
                       role="menu"
                       className="account-dropdown slide-up"
-                      style={{ position:'absolute', right:0, top:'calc(100% + 8px)', minWidth:220 }}
                       onClick={(e) => e.stopPropagation()}
                       onPointerDown={(e) => e.stopPropagation()}
                     >

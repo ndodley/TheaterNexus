@@ -1,0 +1,2 @@
+/* Small pill-style seat/ticket chip, shared identically by Checkout, Confirmation, and OrderDetails */
+.ticket-chip { padding: 6px 10px; border-radius: 16px; background: #f3f4f6; }

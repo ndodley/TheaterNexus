@@ -1,0 +1,4 @@
+/* Login page.
+   All of this page's visual classes (.auth-*, .provider-*, .error) come from
+   styles/authShell.css — shared with Register, Welcome, and VerifyEmail.
+   This file is the home for any future Login-only styling. */

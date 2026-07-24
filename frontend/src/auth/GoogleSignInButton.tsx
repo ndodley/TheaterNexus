@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import '../styles/authShell.css'
+import './GoogleSignInButton.css'
 
 declare global {
   interface Window {
@@ -106,12 +108,12 @@ export default function GoogleSignInButton({ onCredential, mode = 'signin' }: Pr
   }
 
   return (
-    <div style={{ display: 'grid', gap: 8 }}>
+    <div className="googleSignIn-wrap">
       <div ref={containerRef} />
-      {loading && <small style={{ opacity: 0.8 }}>Connecting to Google…</small>}
+      {loading && <small className="googleSignIn-connecting">Connecting to Google…</small>}
       {error && (
-        <div className="card" style={{ padding: 12 }} role="alert">
-          <div className="error" style={{ marginBottom: 6 }}>{error}</div>
+        <div className="card googleSignIn-errorCard" role="alert">
+          <div className="error googleSignIn-errorText">{error}</div>
         </div>
       )}
     </div>

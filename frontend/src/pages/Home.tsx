@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getMovies } from '../api/movies'
 import type { Movie } from '../types'
 import HeroCarousel, { type HeroSlide } from '../components/HeroCarousel'
+import { useFetch } from '../hooks/useFetch'
+import './Home.css'
 
 function HomePage() {
   const navigate = useNavigate()
-  const [movies, setMovies] = useState<Movie[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: movies = [], loading, error } = useFetch(() => getMovies().then(res => res.data), [])
 
   const statusKey = (m: Movie) => (m.availability_status || '').toLowerCase()
   const hasPoster = (m: Movie) => !!(m.image_url || m.image)
@@ -47,15 +47,6 @@ function HomePage() {
       onClick: () => navigate(`/movies/${m.id}`),
     }))
 
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    api.get('/api/movies/')
-      .then(res => { if (active) setMovies(res.data) })
-      .catch(err => { if (active) setError(err?.message ?? 'Failed to load') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [])
 
   const nowShowing = movies.filter(m => statusKey(m) === 'now_showing')
   const comingSoon = movies.filter(m => statusKey(m) === 'coming_soon')
@@ -66,17 +57,17 @@ function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="fade-in" style={{ paddingTop: 40, paddingBottom: 40, background: 'linear-gradient(180deg, rgba(124,58,237,0.10), rgba(124,58,237,0.03))' }}>
+      <section className="fade-in home-heroSection">
         <div className="container">
           <div className="home-heroHeader">
             <div className="home-heroKicker">Trending now • Fresh releases • Fast checkout</div>
             <h1 className="home-heroTitle">
-              Welcome to <span className="logo" style={{ color: 'var(--primary)' }}>Theater Nexus</span>
+              Welcome to <span className="logo home-heroLogoAccent">Theater Nexus</span>
             </h1>
             <p className="home-heroSubtitle">Your modern movie ticketing experience. Browse films, explore details, and book with ease.</p>
           </div>
 
-          <div style={{ marginTop: 16 }}>
+          <div className="home-heroCarouselWrap">
             <HeroCarousel slides={heroSlides} height={420} intervalMs={7000}>
               {({ activeIndex }) => {
                 const featured = heroMovies[activeIndex]
@@ -86,7 +77,7 @@ function HomePage() {
                 return (
                   <div className="hero__glass">
                     <div className="hero__kicker">Featured</div>
-                    <h2 className="hero__title" style={{ marginTop: 12 }}>
+                    <h2 className="hero__title home-featuredTitle">
                       {featured ? featured.title : 'Featured Movies'}
                     </h2>
                     <p className="hero__subtitle">
@@ -112,7 +103,7 @@ function HomePage() {
       </section>
 
       {/* Sections */}
-      <section className="container home-sections" style={{ paddingTop: 24, paddingBottom: 24 }}>
+      <section className="container home-sections">
         {loading && (
           <div className="card">Loading featured movies…</div>
         )}

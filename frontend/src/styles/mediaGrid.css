@@ -1,0 +1,5 @@
+/* Generic media grid (image + content), shared by Showtimes and TheaterShowtimes */
+.media-grid { display: grid; grid-template-columns: 160px 1fr; gap: 16px; }
+@media (max-width: 800px) {
+  .media-grid { grid-template-columns: 1fr; }
+}

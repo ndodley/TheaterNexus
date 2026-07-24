@@ -1,0 +1,47 @@
+/* Verify Email page (moved out of VerifyEmail.tsx inline styles) */
+
+/* Narrow the shared auth-card just for this page */
+.verifyEmail-card { max-width: 560px; }
+
+.verifyEmail-statusBanner {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+.verifyEmail-statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.verifyEmail-statusIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+}
+.verifyEmail-statusIcon--success {
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.25);
+}
+.verifyEmail-statusIcon--error {
+  background: rgba(239,68,68,0.10);
+  border: 1px solid rgba(239,68,68,0.20);
+}
+.verifyEmail-statusIcon--loading {
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.22);
+}
+.verifyEmail-statusGlyph--success { font-weight: 900; color: #16a34a; }
+.verifyEmail-statusGlyph--error { font-weight: 900; color: #ef4444; }
+.verifyEmail-statusGlyph--loading { font-weight: 900; color: #4f46e5; }
+
+.verifyEmail-statusBody { flex: 1; }
+.verifyEmail-statusTitle { font-weight: 800; }
+.verifyEmail-statusSubtext { opacity: 0.8; margin-top: 4px; font-size: 13px; }
+
+.verifyEmail-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}

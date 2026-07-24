@@ -1,0 +1,40 @@
+/* Movie Details layout */
+.details-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+@media (max-width: 800px) {
+  .details-grid { grid-template-columns: 1fr; }
+}
+
+/* Details info chips */
+.kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.kv-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+.kv-icon { font-size: 16px; opacity: 0.85; }
+.kv-content { display: grid; gap: 2px; }
+.kv-label { font-size: 12px; opacity: 0.7; }
+.kv-value { font-weight: 700; }
+.movieDetails-capitalize { text-transform: capitalize; }
+
+/* Poster + title/favorite row (title row & fav button reuse the shared
+   styles/showtimeCard.css .showtimeCard-titleRow / .showtimeCard-favBtn,
+   which are byte-identical patterns) */
+.movieDetails-poster { width: 100%; height: 360px; object-fit: cover; border-radius: 12px; }
+.movieDetails-genresRow { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Section headings shared by the Showtimes and Reviews h3's on this page */
+.movieDetails-sectionHeading { margin: 0 0 8px; }
+
+.movieDetails-chipRow { margin: 12px 0; }
+/* Per-theater card in the Showtimes section */
+.movieDetails-theaterCard { padding: 12px; margin-bottom: 12px; }
+.movieDetails-screenName { font-weight: 600; opacity: 0.9; }
+
+/* Reviews section */
+.movieDetails-card12 { padding: 12px; margin-bottom: 12px; }
+.movieDetails-cardPad12 { padding: 12px; }
+.movieDetails-fieldGrid { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
+.movieDetails-actionsRow { margin-top: 12px; display: flex; gap: 8px; }
+.movieDetails-reviewCard { padding: 12px; margin-bottom: 8px; }
+.movieDetails-reviewHeader { display: flex; justify-content: space-between; }
+.movieDetails-editActionsRow { display: flex; gap: 8px; margin-top: 8px; }
+.movieDetails-editBtn { background-color: #eef; color: #333; }
+.movieDetails-editCard { padding: 12px; margin-top: 8px; }
+.movieDetails-saveBtn { background-color: var(--primary); color: #fff; }

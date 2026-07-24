@@ -1,37 +1,38 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { api, imageUrl } from '../api'
+import { imageUrl } from '../api'
+import { getTheater } from '../api/theaters'
+import { getShowtimes } from '../api/showtimes'
+import { getMovies } from '../api/movies'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import type { ShowTime, Theater } from '../types'
+import type { ShowTime } from '../types'
+import { useFetch } from '../hooks/useFetch'
+import { useFavoriteToggle } from '../hooks/useFavoriteToggle'
+import AdvancedSearchPanel, { AdvancedSearchBlock } from '../components/AdvancedSearchPanel'
+import '../styles/dateTabs.css'
+import './TheaterShowtimes.css'
+import '../styles/mediaGrid.css'
+import '../styles/showtimeCard.css'
 
 export default function TheaterShowtimesPage() {
   const navigate = useNavigate()
+  const { toggleFavorite: toggleFavoriteBase } = useFavoriteToggle()
   const { id } = useParams()
   const theaterId = Number(id)
 
-  const [items, setItems] = useState<ShowTime[]>([])
-  const [theater, setTheater] = useState<Theater | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [advOpen, setAdvOpen] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
   const [q, setQ] = useState('')
   const [upcoming, setUpcoming] = useState(false)
   const [order, setOrder] = useState<'asc'|'desc'>('asc')
   const [timeRange, setTimeRange] = useState<'any'|'morning'|'afternoon'|'evening'>('any')
   const [mpa, setMpa] = useState<''|'G'|'PG'|'PG-13'|'R'|'NC-17'>('')
-  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
-  const [openSort, setOpenSort] = useState(false)
-  const [openTime, setOpenTime] = useState(false)
-  const [openMpa, setOpenMpa] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date()
     const pad = (n: number) => String(n).padStart(2, '0')
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
   })
 
-  useEffect(() => {
-    let active = true
-    setLoading(true)
+  const { data, loading, error } = useFetch(() => {
     const params: any = { theater: theaterId, date: selectedDate }
     if (upcoming) params.upcoming = 'true'
     const rangeToFromTo = (date: string): { from?: string, to?: string } => {
@@ -47,40 +48,31 @@ export default function TheaterShowtimesPage() {
     const ft = rangeToFromTo(selectedDate)
     if (ft.from) params.from = ft.from
     if (ft.to) params.to = ft.to
-    Promise.all([
-      api.get('/api/theaters/' + theaterId + '/'),
-      api.get('/api/showtimes/', { params }),
-    ])
-      .then(([thRes, stRes]) => { if (active) { setTheater(thRes.data); setItems(stRes.data) } })
-      .catch(err => { if (active) setError(err?.message ?? 'Failed to load theater showtimes') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [theaterId, selectedDate, upcoming, timeRange])
+    return Promise.all([
+      getTheater(theaterId),
+      getShowtimes(params),
+    ]).then(([thRes, stRes]) => ({ theater: thRes.data, items: stRes.data }))
+  }, [theaterId, selectedDate, upcoming, timeRange], { errorFallback: 'Failed to load theater showtimes' })
+  const theater = data?.theater ?? null
+  const items = data?.items ?? []
 
-  useEffect(() => {
-    let active = true
-    api.get('/api/movies/', { params: { favorited: 'true', ordering: 'title' } })
-      .then(res => { if (active) setFavoriteIds(new Set((res.data || []).map((m: any) => m.id))) })
-      .catch(() => {})
-    return () => { active = false }
-  }, [])
+  useFetch(
+    () => getMovies({ favorited: 'true', ordering: 'title' }).then(res => {
+      setFavoriteIds(new Set((res.data || []).map((m: any) => m.id)))
+      return res.data
+    }),
+    [],
+  )
 
   async function toggleFavorite(movieId: number) {
-    try {
-      if (favoriteIds.has(movieId)) {
-        try {
-          await api.delete(`/api/movies/${movieId}/favorite/`)
-        } catch (err: any) {
-          await api.post(`/api/movies/${movieId}/unfavorite/`)
-        }
-        setFavoriteIds(prev => { const next = new Set(prev); next.delete(movieId); return next })
-      } else {
-        await api.post(`/api/movies/${movieId}/favorite/`)
-        setFavoriteIds(prev => { const next = new Set(prev); next.add(movieId); return next })
-      }
-    } catch (err: any) {
-      if (err?.response?.status === 401) navigate('/login')
-    }
+    await toggleFavoriteBase(movieId, favoriteIds.has(movieId), (next) => {
+      setFavoriteIds(prev => {
+        const nextSet = new Set(prev)
+        if (next) nextSet.add(movieId)
+        else nextSet.delete(movieId)
+        return nextSet
+      })
+    })
   }
 
   // Group by movie for the selected date
@@ -111,19 +103,19 @@ export default function TheaterShowtimesPage() {
   if (error) return <section className="container"><div className="card">Error: {error}</div></section>
 
   return (
-    <section className="container slide-up" style={{paddingTop:24, paddingBottom:24}}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-        <h2 style={{margin:'8px 0 4px'}}>{theater?.name || 'Theater'}</h2>
+    <section className="container slide-up section-pad">
+      <div className="flex-between-baseline">
+        <h2 className="theaterShowtimes-heading">{theater?.name || 'Theater'}</h2>
       </div>
       {theater?.address && (
-        <div style={{opacity:0.8, marginBottom:12, display:'flex', alignItems:'center', gap:6}}>
+        <div className="theaterShowtimes-address">
           <span role="img" aria-label="Location">📍</span>
           <span>{theater.address}</span>
         </div>
       )}
 
       {/* Date tabs */}
-      <div className="tabs" aria-label="Choose a date" style={{marginBottom:12}}>
+      <div className="tabs tabs--gapped" aria-label="Choose a date">
         {(() => {
           const out: ReactNode[] = []
           const pad = (n: number) => String(n).padStart(2, '0')
@@ -137,7 +129,7 @@ export default function TheaterShowtimesPage() {
             const isActive = selectedDate === value
             out.push(
               <button key={value} className={`tab-btn ${isActive ? 'active' : ''}`} onClick={() => setSelectedDate(value)}>
-                <div style={{fontWeight: isActive ? 800 : 600}}>{i === 0 ? 'Today' : weekday}</div>
+                <div className="dateTab-label">{i === 0 ? 'Today' : weekday}</div>
                 <small>{mmdd}</small>
               </button>
             )
@@ -149,75 +141,41 @@ export default function TheaterShowtimesPage() {
       {items.length === 0 && <div className="card">No showtimes for this date.</div>}
 
       {/* Advanced search panel (matching Movies page styles) */}
-      <div className="card adv-search-section" style={{marginBottom:12}}>
-        <div className="adv-search">
-          <div className="adv-toolbar">
-            <div className="adv-input">
-              <span className="icon">🔎</span>
-              <input
-                type="text"
-                placeholder="Search movies…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-ghost" onClick={() => setAdvOpen(v => !v)} aria-expanded={advOpen}>Filter</button>
-            <button className="btn btn-primary" onClick={() => setSelectedDate(selectedDate)}>Search</button>
+      <AdvancedSearchPanel
+        searchValue={q}
+        onSearchChange={setQ}
+        onSearch={() => setSelectedDate(selectedDate)}
+        placeholder="Search movies…"
+        gapped
+      >
+        <AdvancedSearchBlock label="Sort">
+          <div className="adv-row">
+            <label><input type="radio" name="order" checked={order==='asc'} onChange={() => setOrder('asc')} /> Ascending</label>
+            <label><input type="radio" name="order" checked={order==='desc'} onChange={() => setOrder('desc')} /> Descending</label>
           </div>
-          {advOpen && (
-            <div className="adv-grid">
-              <div className="adv-block">
-                <div className="adv-block-header" onClick={() => setOpenSort(v => !v)}>
-                  <span>Sort</span><span className="caret">▾</span>
-                </div>
-                {openSort && (
-                  <div className="adv-block-body">
-                    <div className="adv-row">
-                      <label><input type="radio" name="order" checked={order==='asc'} onChange={() => setOrder('asc')} /> Ascending</label>
-                      <label><input type="radio" name="order" checked={order==='desc'} onChange={() => setOrder('desc')} /> Descending</label>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="adv-block">
-                <div className="adv-block-header" onClick={() => setOpenTime(v => !v)}>
-                  <span>Time</span><span className="caret">▾</span>
-                </div>
-                {openTime && (
-                  <div className="adv-block-body">
-                    <div className="adv-row">
-                      <label><input type="radio" name="timeRange" checked={timeRange==='any'} onChange={() => setTimeRange('any')} /> Any</label>
-                      <label><input type="radio" name="timeRange" checked={timeRange==='morning'} onChange={() => setTimeRange('morning')} /> Morning</label>
-                      <label><input type="radio" name="timeRange" checked={timeRange==='afternoon'} onChange={() => setTimeRange('afternoon')} /> Afternoon</label>
-                      <label><input type="radio" name="timeRange" checked={timeRange==='evening'} onChange={() => setTimeRange('evening')} /> Evening</label>
-                    </div>
-                    <div className="adv-row" style={{marginTop:8}}>
-                      <label><input type="checkbox" checked={upcoming} onChange={(e) => setUpcoming(e.target.checked)} /> Upcoming only</label>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="adv-block">
-                <div className="adv-block-header" onClick={() => setOpenMpa(v => !v)}>
-                  <span>MPA Rating</span><span className="caret">▾</span>
-                </div>
-                {openMpa && (
-                  <div className="adv-block-body">
-                    <div className="adv-row" style={{gridTemplateColumns:'1fr 1fr'}}>
-                      <label><input type="radio" name="mpa" checked={mpa===''} onChange={() => setMpa('')} /> Any</label>
-                      <label><input type="radio" name="mpa" checked={mpa==='G'} onChange={() => setMpa('G')} /> G</label>
-                      <label><input type="radio" name="mpa" checked={mpa==='PG'} onChange={() => setMpa('PG')} /> PG</label>
-                      <label><input type="radio" name="mpa" checked={mpa==='PG-13'} onChange={() => setMpa('PG-13')} /> PG-13</label>
-                      <label><input type="radio" name="mpa" checked={mpa==='R'} onChange={() => setMpa('R')} /> R</label>
-                      <label><input type="radio" name="mpa" checked={mpa==='NC-17'} onChange={() => setMpa('NC-17')} /> NC-17</label>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        </AdvancedSearchBlock>
+        <AdvancedSearchBlock label="Time">
+          <div className="adv-row">
+            <label><input type="radio" name="timeRange" checked={timeRange==='any'} onChange={() => setTimeRange('any')} /> Any</label>
+            <label><input type="radio" name="timeRange" checked={timeRange==='morning'} onChange={() => setTimeRange('morning')} /> Morning</label>
+            <label><input type="radio" name="timeRange" checked={timeRange==='afternoon'} onChange={() => setTimeRange('afternoon')} /> Afternoon</label>
+            <label><input type="radio" name="timeRange" checked={timeRange==='evening'} onChange={() => setTimeRange('evening')} /> Evening</label>
+          </div>
+          <div className="adv-row mt-8">
+            <label><input type="checkbox" checked={upcoming} onChange={(e) => setUpcoming(e.target.checked)} /> Upcoming only</label>
+          </div>
+        </AdvancedSearchBlock>
+        <AdvancedSearchBlock label="MPA Rating">
+          <div className="adv-row">
+            <label><input type="radio" name="mpa" checked={mpa===''} onChange={() => setMpa('')} /> Any</label>
+            <label><input type="radio" name="mpa" checked={mpa==='G'} onChange={() => setMpa('G')} /> G</label>
+            <label><input type="radio" name="mpa" checked={mpa==='PG'} onChange={() => setMpa('PG')} /> PG</label>
+            <label><input type="radio" name="mpa" checked={mpa==='PG-13'} onChange={() => setMpa('PG-13')} /> PG-13</label>
+            <label><input type="radio" name="mpa" checked={mpa==='R'} onChange={() => setMpa('R')} /> R</label>
+            <label><input type="radio" name="mpa" checked={mpa==='NC-17'} onChange={() => setMpa('NC-17')} /> NC-17</label>
+          </div>
+        </AdvancedSearchBlock>
+      </AdvancedSearchPanel>
       {Array.from(groupedByMovie.entries())
         .sort((a, b) => {
           const at = a[1].title.toLowerCase()
@@ -228,8 +186,7 @@ export default function TheaterShowtimesPage() {
         .map(([movieId, mv]) => (
         <article
           key={movieId}
-          className="card"
-          style={{padding:16, marginBottom:16, cursor:'pointer'}}
+          className="card showtimeCard-article"
           onClick={() => navigate(`/movies/${movieId}`)}
           role="button"
           tabIndex={0}
@@ -238,25 +195,24 @@ export default function TheaterShowtimesPage() {
           <div className="media-grid">
             <div>
               {mv.image ? (
-                <img src={imageUrl(mv.image)} alt={mv.title} style={{width:'100%', height:220, objectFit:'cover', borderRadius:12}} />
+                <img src={imageUrl(mv.image)} alt={mv.title} className="showtimeCard-poster" />
               ) : (
-                <div className="card" style={{height:220, display:'grid', placeItems:'center'}}>No image</div>
+                <div className="card showtimeCard-posterPlaceholder">No image</div>
               )}
             </div>
             <div>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                <h3 style={{margin:0}}>{mv.title}</h3>
+              <div className="showtimeCard-titleRow">
+                <h3 className="m-0">{mv.title}</h3>
                 <button
-                  className="btn btn-ghost"
+                  className="btn btn-ghost showtimeCard-favBtn"
                   title={favoriteIds.has(movieId) ? 'Remove from Favorites' : 'Add to Favorites'}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(movieId) }}
                   aria-label={favoriteIds.has(movieId) ? 'Unfavorite' : 'Favorite'}
-                  style={{display:'flex', alignItems:'center', gap:6}}
                 >
                   <span role="img" aria-label="favorite">{favoriteIds.has(movieId) ? '❤️' : '🤍'}</span>
                 </button>
               </div>
-              <div style={{marginTop:6, display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+              <div className="showtimeCard-chipsRow">
                 {(() => {
                   const rv = typeof mv.rating === 'number' ? mv.rating : parseFloat((mv.rating as any) ?? '0')
                   const hasRating = !isNaN(rv)
@@ -275,9 +231,9 @@ export default function TheaterShowtimesPage() {
                   return chips
                 })()}
               </div>
-              <div style={{marginTop:12}}>
+              <div className="mt-12">
                 <strong>{theater?.name}</strong>
-                <div style={{marginTop:6, display:'flex', flexWrap:'wrap', gap:8}}>
+                <div className="showtimeCard-timesRow">
                   {mv.times.map(s => {
                     const start = new Date(s.start_time)
                     const end = s.end_time ? new Date(s.end_time) : null
