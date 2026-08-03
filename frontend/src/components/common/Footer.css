@@ -1,0 +1,89 @@
+/* Site-wide footer, rendered by Layout on every page.
+   Uses the same theme variables (--surface, --border, --muted, --primary)
+   as the rest of the app so it matches both the light and dark themes
+   without any footer-specific overrides. */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--footer-bg);
+  margin-top: 40px;
+}
+
+.site-footer-inner {
+  padding-top: 40px;
+  padding-bottom: 24px;
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+}
+
+.site-footer-brand {
+  display: grid;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.site-footer-logo {
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text);
+}
+.site-footer-logo:hover {
+  color: var(--primary);
+}
+
+.site-footer-tagline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.site-footer-col {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.site-footer-heading {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.site-footer-col a {
+  color: var(--text);
+  font-weight: 500;
+  opacity: 0.85;
+  transition: opacity 150ms ease, color 150ms ease;
+}
+.site-footer-col a:hover {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.site-footer-bottom {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .site-footer-grid { grid-template-columns: 1fr 1fr; }
+  .site-footer-brand { grid-column: 1 / -1; max-width: none; }
+}
+@media (max-width: 480px) {
+  .site-footer-grid { grid-template-columns: 1fr; gap: 24px; }
+  .site-footer-bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
+}

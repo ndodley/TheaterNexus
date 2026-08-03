@@ -1,0 +1,14 @@
+/* Layout shell shared by every page: navbar + routed content + Footer,
+   arranged in a full-height three-row grid so Footer stays pinned to
+   the bottom even on short pages. Replaces the old #root grid rule in
+   index.css, which only worked on the single wrapper div AppRoutes used
+   to render directly. Footer's own look lives in Footer.css. */
+.app-layout {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+}
+
+.app-main {
+  min-height: 0;
+}
