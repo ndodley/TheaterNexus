@@ -10,10 +10,22 @@
   --primary-300: #a78bfa;
   --accent: #0891b2;
   --border: #e2e8f0; /* slate-200 */
-  /* Navbar theme (light default) */
+  /* Subtly elevated surface for nested panels (fields, form panels, provider
+     buttons) so they read as distinct from the card/page behind them in
+     both themes, instead of the old near-invisible rgba overlays. */
+  --surface-2: #f1f5f9; /* slate-100 */
+  /* Footer needs its own token: --surface is literally #ffffff in light
+     mode (same as --bg), so a plain .site-footer { background: var(--surface) }
+     was invisible against the page above it. This is a violet wash tied to
+     --primary instead of a generic gray, so it reads as branded (darker
+     step than the very first pass, so it reads clearly against the page). */
+  --footer-bg: #ddd6fe;
+  --badge-text: var(--primary-700);
+  /* Navbar theme (light default). Text is white on both themes since
+     --nav-bg is the same solid purple either way. */
   --nav-bg: #7c3aed; /* solid purple */
-  --nav-text: #0b1020; /* near-black */
-  --nav-hover: #111827; /* darker hover */
+  --nav-text: #ffffff;
+  --nav-hover: rgba(255, 255, 255, 0.85);
   --shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
 
   color-scheme: light;
@@ -30,20 +42,30 @@
 }
 
 html[data-theme="dark"] {
-  /* Dark theme overrides */
-  --bg: #0f0f14;
-  --surface: #161722;
-  --text: #e9e9ef;
-  --muted: #b9b9c8;
+  /* Dark theme overrides. Deliberately not a neutral/near-black grayscale:
+     a flat black background makes every surface look the same depth and
+     clashes with a purple brand. These are a purple-tinted graphite ramp
+     instead (each step measurably lighter, same hue family as --primary),
+     which is the same "tonal elevation" idea Material Design 3 and most
+     modern dark UIs use to fake depth --bg < --surface < --surface-2. */
+  --bg: #14121c;
+  --surface: #1c1930;
+  --text: #f0eef7; /* soft off-white, not pure #fff -- less halation/glare against a dark bg */
+  --muted: #b6b0cb;
   --primary: #7c3aed;
   --primary-700: #6d28d9;
   --primary-300: #a78bfa;
   --accent: #22d3ee;
-  --border: #292a3a;
+  --border: #38334f;
+  --surface-2: #262143; /* lighter than --surface so nested panels are visible */
+  /* One tonal step lighter than --surface (reusing the existing --surface-2
+     elevation token) so the footer stands out a bit more against the page. */
+  --footer-bg: var(--surface-2);
+  --badge-text: var(--primary-300);
   --nav-bg: #7c3aed; /* same purple */
   --nav-text: #ffffff;
   --nav-hover: rgba(255,255,255,0.9);
-  --shadow: 0 8px 24px rgba(0,0,0,0.25);
+  --shadow: 0 10px 28px rgba(0,0,0,0.4);
   color-scheme: dark;
 }
 
@@ -63,12 +85,6 @@ html, body {
   background-color: var(--bg) !important;
   color: var(--text) !important;
   transition: background-color 250ms ease, color 250ms ease;
-}
-
-#root {
-  display: grid;
-  min-height: 100vh;
-  grid-template-rows: auto 1fr auto;
 }
 
 h1 {
@@ -116,20 +132,19 @@ button:focus-visible {
   color-scheme: light dark;
 }
 
-.btn { display:inline-flex; align-items:center; gap:8px; border-radius:8px; padding:8px 12px; font-weight:600; border:1px solid var(--border); color: var(--nav-text); }
+.btn { display:inline-flex; align-items:center; gap:8px; border-radius:8px; padding:8px 12px; font-weight:600; border:1px solid var(--border); color: var(--text); }
 .btn-primary { background: var(--primary-300); color:#0b0f13; border-color: transparent; }
 .btn-ghost { background: transparent; }
 /* Plain (non-.btn) buttons styled to look primary/muted, shared by MovieDetails, MyReviews, SeatSelection */
 .btn-solid-primary { background-color: var(--primary); color: #fff; border-color: var(--primary); }
 .btn-solid-muted { background-color: #eee; color: #333; }
 .chip { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); font-size:12px; opacity:0.8 }
-.card { border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,0.02) }
 /* .grid-2 moved to pages/Register.css (only Register uses it) */
 /* .error moved to styles/authShell.css (only Login, Register, GoogleSignInButton use it) */
 
 form label { display:grid; gap:6px }
 form input[type="text"], form input[type="email"], form input[type="password"], form input[type="date"], form input[type="file"] {
-  padding:10px 12px; border-radius:8px; border:1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--nav-text);
+  padding:10px 12px; border-radius:8px; border:1px solid var(--border); background: var(--surface-2); color: var(--text);
   box-shadow: var(--shadow);
   transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
 }
@@ -140,7 +155,7 @@ form input[type="text"], form input[type="email"], form input[type="password"], 
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(124, 58, 237, 0.12);
-  color: var(--primary-300);
+  color: var(--badge-text);
   font-size: 12px;
   margin-right: 8px;
 }

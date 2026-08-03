@@ -11,8 +11,8 @@
   gap: 14px;
   align-items: center;
 }
-.order-itemPoster { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
-.order-itemPosterPlaceholder { height: 130px; display: grid; place-items: center; }
+.order-itemPoster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 10px; }
+.order-itemPosterPlaceholder { aspect-ratio: 2 / 3; display: grid; place-items: center; }
 .order-itemTitleRow { display: flex; align-items: baseline; gap: 8px; }
 .order-itemTitle { margin: 0 0 4px 0; }
 .order-itemChips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }

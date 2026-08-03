@@ -1,8 +1,0 @@
-/* Reusable cards grid */
-.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-@media (max-width: 700px) { .cards-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; } }
-
-/* Theater card (moved out of Theaters.tsx inline styles) */
-.theaters-cardItem { padding: 16px; cursor: pointer; }
-.theaters-cardBody { display: grid; gap: 8px; }
-.theaters-cardAddress { opacity: 0.8; display: flex; align-items: center; gap: 6px; }

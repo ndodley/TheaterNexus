@@ -1,0 +1,31 @@
+/* Cart page (moved out of Cart.tsx inline styles) */
+.cart-summaryBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.cart-summaryCount { font-weight: 700; }
+.cart-checkoutBtn { min-width: 160px; }
+.cart-emptyCard { opacity: 0.9; }
+
+.cart-itemRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 140px;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.cart-itemPoster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; }
+.cart-itemPosterPlaceholder { aspect-ratio: 2 / 3; display: grid; place-items: center; }
+.cart-itemTitleRow { display: flex; align-items: baseline; gap: 10px; }
+.cart-itemTitle { margin: 0 0 4px 0; }
+.cart-itemSeatChips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.cart-itemPriceValue { font-weight: 700; font-size: 18px; }
+
+.cart-subtotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

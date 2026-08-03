@@ -1,0 +1,123 @@
+.nav {
+  backdrop-filter: saturate(180%) blur(8px);
+  background: var(--nav-bg);
+  border-bottom: 1px solid transparent;
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+}
+.nav .logo,
+.nav a {
+  color: var(--nav-text);
+}
+.nav a:hover {
+  color: var(--nav-hover);
+}
+.nav button {
+  background: transparent;
+  border-color: rgba(255,255,255,0.4);
+  color: var(--nav-text);
+}
+/* .nav button above is meant for chrome sitting directly on the purple
+   navbar bar (menu-toggle, account-toggle) and would otherwise win by
+   specificity over .btn-primary's own color when the Sign-in button
+   renders inside .nav, making its text invisible against --primary-300. */
+.nav .btn-primary {
+  color: #0b0f13;
+}
+
+/* Top row layout (moved out of Navbar.tsx inline styles) */
+.navbar-topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.navbar-brandGroup { display: flex; align-items: center; gap: 20px; }
+.navbar-logoLink { font-weight: 800; font-size: 20px; color: var(--nav-text); }
+.navbar-actions { display: flex; align-items: center; gap: 16px; }
+.navbar-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow); }
+.navbar-username { color: var(--nav-text); font-weight: 700; }
+
+/* Modern nav links */
+.nav-links { display: flex; align-items: center; gap: 10px; }
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--nav-text);
+  transition: background-color 200ms ease, color 200ms ease, transform 120ms ease;
+}
+.nav-link:hover { background: rgba(255,255,255,0.12); color: var(--nav-hover); }
+.nav-link.active { background: rgba(255,255,255,0.18); color: #fff; }
+.mi-icon { opacity: 0.9; }
+.cart-link { font-weight: 700; }
+
+/* Mobile nav toggle */
+.menu-toggle { display: none; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.4); color: var(--nav-text); background: transparent; }
+.mobile-menu {
+  position: absolute;
+  left: 0; right: 0;
+  top: 100%;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 8px;
+}
+.mobile-menu .menu-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; }
+.mobile-menu .menu-item:hover { background: rgba(124,58,237,0.08); color: var(--primary); }
+
+/* Account dropdown */
+.account-menu { position: relative; z-index: 10000; }
+.account-toggle {
+  background: transparent;
+  border-color: rgba(255,255,255,0.4);
+  padding: 6px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+}
+.account-toggle:hover { background: rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(124,58,237,0.22); }
+.account-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 1000;
+  pointer-events: auto;
+}
+.menu-group { display: grid; gap: 4px; }
+/* Scoped to .nav (not just .menu-item) so this out-specifies the broad
+   .nav button rule above -- otherwise account-dropdown/mobile-menu item
+   text inherited --nav-text (white) instead of --text, and disappeared
+   against the dropdown's --surface background in light mode. */
+.nav .menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  gap: 6px;
+}
+.menu-item:hover { background: rgba(124,58,237,0.08); color: var(--primary); }
+.menu-divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .menu-toggle { display: inline-flex; }
+}
