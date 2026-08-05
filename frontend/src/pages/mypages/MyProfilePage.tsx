@@ -1,25 +1,24 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../auth/AuthContext.tsx'
-import { imageUrl } from '../../api/index.ts'
-import { getMe, patchMe, uploadAvatar, removeAvatar } from '../../api/auth.ts'
+import { useMyProfile } from '../../hooks/profile/useMyProfile'
 import './MyProfilePage.css'
 
 export default function ProfilePage() {
-  const { user, refreshMe } = useAuth()
-  const [profile, setProfile] = useState(user || null)
-  const [uploading, setUploading] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    phone_number: user?.phone_number || '',
-    date_of_birth: (user?.date_of_birth || '') as string,
-  })
-
-  const avatarSrc = profile?.avatar_url ? imageUrl(profile.avatar_url) : (profile?.avatar ? imageUrl(profile.avatar) : imageUrl('/media/default_poster/default_avatar.jpg'))
+  const {
+    user,
+    profile,
+    editing,
+    saving,
+    uploading,
+    error,
+    form,
+    setForm,
+    avatarSrc,
+    onUploadAvatar,
+    onRemoveAvatar,
+    onSaveProfile,
+    startEditing,
+    cancelEditing,
+  } = useMyProfile()
 
   if (!user) {
     return (
@@ -35,68 +34,6 @@ export default function ProfilePage() {
       </section>
     )
   }
-
-  async function loadMe() {
-    try {
-      const { data } = await getMe()
-      setProfile(data)
-      setForm({
-        first_name: data?.first_name || '',
-        last_name: data?.last_name || '',
-        phone_number: data?.phone_number || '',
-        date_of_birth: (data?.date_of_birth || '') as string,
-      })
-    } catch {}
-  }
-
-  async function onUploadAvatar(file: File) {
-    setUploading(true)
-    try {
-      await uploadAvatar(file)
-      await loadMe()
-      await refreshMe()
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  async function onRemoveAvatar() {
-    setUploading(true)
-    try {
-      await removeAvatar()
-      await loadMe()
-      await refreshMe()
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  async function onSaveProfile(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    setError(null)
-    try {
-      const payload = {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone_number: form.phone_number,
-        date_of_birth: form.date_of_birth || null,
-      }
-      const { data } = await patchMe(payload)
-      setProfile(data)
-      setEditing(false)
-      await refreshMe()
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || 'Failed to update profile')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  useEffect(() => {
-    loadMe()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   return (
     <section className="container fade-in section-pad">
@@ -123,14 +60,9 @@ export default function ProfilePage() {
             </div>
             <div className="profileHeaderActions">
               {!editing ? (
-                <button className="btn btn-primary" onClick={() => { setEditing(true); setError(null) }}>Edit</button>
+                <button className="btn btn-primary" onClick={startEditing}>Edit</button>
               ) : (
-                <button className="btn btn-ghost" onClick={() => { setEditing(false); setError(null); setForm({
-                  first_name: profile?.first_name || '',
-                  last_name: profile?.last_name || '',
-                  phone_number: profile?.phone_number || '',
-                  date_of_birth: (profile?.date_of_birth || '') as string,
-                }) }}>Cancel</button>
+                <button className="btn btn-ghost" onClick={cancelEditing}>Cancel</button>
               )}
             </div>
           </div>

@@ -18,11 +18,13 @@ The goal is to demonstrate job‑relevant full‑stack skills: designing relatio
 
 ## Highlights (for recruiters)
 
-- **Real domain logic (not just CRUD):** seat maps, seat availability, time‑limited holds, and showtime scheduling rules.
+- **Real domain logic (not just CRUD):** seat maps, seat availability, time‑limited holds, and showtime scheduling rules — including a "one movie, one room per theater per day" constraint enforced both in the admin scheduler and in model validation.
 - **End‑to‑end purchase pipeline:** cart → checkout → order → ticket issuance (ticket codes).
 - **Auth & profiles:** custom user model, JWT access/refresh, logout via token blacklisting, profile + avatar upload.
-- **Modern onboarding:** email verification flow + Google sign-in (Google Identity Services → backend token verification → JWT issuance).
+- **Modern onboarding:** email verification flow + Google sign-in (Google Identity Services → backend token verification → JWT issuance), inside a redesigned auth UI.
 - **Payments-ready:** Stripe PaymentIntent + webhook handler + payment event logging.
+- **Data integrity, not just data display:** each movie's rating average recalculates automatically via a Django signal whenever a review is created, edited, or deleted, with a management command to backfill historical data.
+- **Consistent UI system:** one shared pagination hook powers every list view (Movies, Theaters, Favorites, Showtimes, My Reviews, and per-movie reviews), and a single CSS custom-property theme drives light/dark mode everywhere.
 
 ## Screenshots & Walkthrough
 
@@ -33,22 +35,25 @@ Protected pages (cart, checkout, orders, favorites, profile, reviews) redirect t
 
 The home page is a high-level entry point that highlights featured content and routes users into the core browsing flows (movies, theaters, showtimes).
 
-<img width="958" height="492" alt="Home page (signed out)" src="https://github.com/user-attachments/assets/495973c5-f306-4b8b-8bbc-b13432df05da" />
-<img width="959" height="494" alt="Home page (signed out - scrolled)" src="https://github.com/user-attachments/assets/a2019648-e4ff-4280-bf76-fc6bf213fc3b" />
+<img width="1998" height="1075" alt="Home page (signed out)" src="https://github.com/user-attachments/assets/68174fc6-b13c-4939-bd2f-7b2a9bddac18" />
+<img width="1999" height="1032" alt="Home page (signed out) - Now Showing carousel" src="https://github.com/user-attachments/assets/f32b6382-1be1-45c5-af61-5e75aa299db6" />
+<img width="1997" height="1030" alt="Home page (signed out) - scrolled" src="https://github.com/user-attachments/assets/9f10b48d-dc80-432c-93b8-3b80e0030ec6" />
+<img width="1999" height="1031" alt="Home page (signed out) - footer" src="https://github.com/user-attachments/assets/59dc3a7c-5878-40c1-b453-3f9f06af69b2" />
 
 #### Signed in
 
 When signed in, the navigation and available actions expand to include user-specific features (favorites, reviews, order history, and profile access).
 
-<img width="959" height="491" alt="Home page (signed in)" src="https://github.com/user-attachments/assets/2fbf8180-df20-423a-805e-f5b2608bb1cd" />
+<img width="1999" height="1033" alt="Home page (signed in)" src="https://github.com/user-attachments/assets/ca8b98f2-3bbe-4325-9e68-4fb0b6670b53" />
 
 ### Movies List Page
 
 The Movies page supports browsing, searching, and filtering/sorting so users can quickly find titles they’re interested in.
 
-<img width="959" height="493" alt="Movies list" src="https://github.com/user-attachments/assets/2e31e667-a6ff-41ee-bc97-f6844c1b700e" />
-<img width="957" height="490" alt="Movies list" src="https://github.com/user-attachments/assets/abd32c72-e5ac-453c-bdb6-f25e1d519c8f" />
-<img width="956" height="493" alt="Movies list" src="https://github.com/user-attachments/assets/d5d54e23-6291-476a-a1ab-62fa319275bd" />
+<img width="1998" height="1030" alt="Movies list" src="https://github.com/user-attachments/assets/77a14e8a-56b1-46df-aa5d-9fdf52e32075" />
+<img width="1999" height="1032" alt="Movies list - filters open" src="https://github.com/user-attachments/assets/16d5b596-bd1b-45f2-80b5-74a42fcb7c89" />
+<img width="1999" height="1030" alt="Movies list - filtered results" src="https://github.com/user-attachments/assets/e2fdada8-5939-4de7-8b1b-a423b3deda0d" />
+<img width="1999" height="1033" alt="Movies list - pagination" src="https://github.com/user-attachments/assets/adf4b37c-0149-479f-893e-5192866f2b81" />
 
 ### Movie Details Page
 
@@ -58,13 +63,17 @@ The Movie Details page is where users view plot/metadata, see review information
 
 Signed-out users can browse movie details and read information without committing to an account.
 
-<img width="958" height="456" alt="Movie details (signed out)" src="https://github.com/user-attachments/assets/92522069-5230-49b2-9006-d20e9c8f47d9" />
+<img width="1999" height="1033" alt="Movie details (signed out)" src="https://github.com/user-attachments/assets/7441e698-a688-4cb0-b08f-ca22340161f0" />
+<img width="1996" height="1028" alt="Movie details (signed out) - showtimes" src="https://github.com/user-attachments/assets/2dfa5b77-559f-461e-87da-6879e3196924" />
+<img width="1998" height="1028" alt="Movie details (signed out) - reviews" src="https://github.com/user-attachments/assets/0b5941a0-9438-4735-a341-3816546aa3c6" />
 
 #### Signed in
 
-Signed-in users can take action: favorite movies, write/manage reviews, and proceed through the ticketing flow.
+Signed-in users can take action: favorite movies, rate and review with a star picker, page through reviews once a movie has more than a few, and proceed through the ticketing flow. Each movie's average rating recalculates automatically as reviews come in.
 
-<img width="953" height="494" alt="Movie details (signed in)" src="https://github.com/user-attachments/assets/0844670b-1071-4839-a65d-b74cf0a1de0d" />
+<img width="2007" height="1007" alt="Movie details (signed in)" src="https://github.com/user-attachments/assets/ae271031-bb36-4615-b8f8-96e70ee6c390" />
+<img width="2007" height="1005" alt="Movie details (signed in) - write a review" src="https://github.com/user-attachments/assets/eca7aba8-c77d-49b3-90b5-fc66165203b6" />
+<img width="2006" height="1007" alt="Movie details (signed in) - paginated reviews" src="https://github.com/user-attachments/assets/231087d3-1210-438d-8f8b-fa2485d8d2d2" />
 
 ### Showtimes Page
 
@@ -76,8 +85,10 @@ What this view demonstrates:
 - **Fast path to purchase:** the list is structured around picking a showtime and moving directly to seats.
 - **Backend consistency:** showtimes follow scheduling validation rules (no overlapping showtimes per screen).
 
-<img width="959" height="491" alt="Showtimes page (filters + list)" src="https://github.com/user-attachments/assets/3af48bc5-d93c-44a7-b5f8-27e131480d3c" />
-<img width="958" height="491" alt="Showtimes page (filters applied)" src="https://github.com/user-attachments/assets/5028dfd4-1b4a-4da6-94d6-98a1958d5b2e" />
+<img width="2007" height="1009" alt="Showtimes page (filters + list)" src="https://github.com/user-attachments/assets/5e4ac89e-e2b0-4860-bcd6-323e07e22d3d" />
+<img width="2006" height="1007" alt="Showtimes page (filters applied)" src="https://github.com/user-attachments/assets/4bee9664-6f35-45d4-81b0-84ed8848a53c" />
+<img width="2007" height="1007" alt="Showtimes page (grouped by theater)" src="https://github.com/user-attachments/assets/cac87fd9-1628-439f-a6ce-bdac866203f3" />
+<img width="2007" height="1006" alt="Showtimes page (date tabs)" src="https://github.com/user-attachments/assets/493f3e86-066a-4a30-940b-711f4b214c4b" />
 
 ### Showtimes Seat Selection Page
 
@@ -85,11 +96,12 @@ This page turns a showtime into a seat map with availability.
 
 What this view demonstrates:
 
-- **Seat map rendering:** seats are shown in a grid per screen.
+- **Seat map rendering:** seats are shown in a themed, cinema-style grid per screen, with available/unavailable/paid/selected states visually distinct at a glance (the legend below the map spells out each one).
 - **Availability logic:** unavailable seats are visually blocked (already held or already sold).
 - **Add-to-cart behavior:** selecting seats creates time-limited holds so two users can’t buy the same seat at the same time.
 
-<img width="959" height="496" alt="Seat selection" src="https://github.com/user-attachments/assets/f0bf9087-4154-432b-9b31-da8962ace29a" />
+<img width="2004" height="1009" alt="Seat selection (seat map)" src="https://github.com/user-attachments/assets/118d4eb7-d438-475a-bc99-0b3055ecd24d" />
+<img width="2006" height="1009" alt="Seat selection (seats selected, subtotal)" src="https://github.com/user-attachments/assets/c9d781b0-eff8-4724-aa9d-d718d3732915" />
 
 ### User Cart Page
 
@@ -98,10 +110,11 @@ The cart groups tickets by showtime and keeps the user focused on the purchase d
 What this view demonstrates:
 
 - **Grouping by showtime:** prevents confusion when a user has tickets for different movies/times.
+- **Transparent pricing:** each group shows its base ticket price alongside the line total, so the total is never just an unexplained lump sum.
 - **Seat-level management:** remove individual seats without clearing the entire cart.
 - **Hold awareness:** carts reflect time-limited seat holds; the UI is designed to recover cleanly if holds expire.
 
-<img width="958" height="493" alt="Cart page" src="https://github.com/user-attachments/assets/a4c5ac1a-7c15-4be9-a620-5d879c41695a" />
+<img width="2004" height="1006" alt="Cart page" src="https://github.com/user-attachments/assets/dbd360fb-8226-403a-b7a0-908fcb19fea4" />
 
 ### User Checkout Page
 
@@ -113,7 +126,8 @@ What this view demonstrates:
 - **Backend-driven totals:** totals come from the server/cart state (not trusted from the browser).
 - **Purchase pipeline:** cart → create payment intent → confirm payment → finalize order → tickets.
 
-<img width="960" height="489" alt="Checkout page" src="https://github.com/user-attachments/assets/ab1e91a5-b53b-4115-914b-562610e58a7e" />
+<img width="2007" height="1006" alt="Checkout page" src="https://github.com/user-attachments/assets/3639de13-930e-42e9-9a56-ba173dfd6175" />
+<img width="2006" height="1009" alt="Checkout page - Stripe payment form" src="https://github.com/user-attachments/assets/92b87799-021f-4afe-8fdc-cfcc0bd7914e" />
 
 ### User Payment Successful Page
 
@@ -124,7 +138,7 @@ What this view demonstrates:
 - **Clear end-state:** user sees a successful purchase state instead of being left on a processing screen.
 - **Order handoff:** the next step is to view order history/details (tickets + codes).
 
-<img width="958" height="496" alt="Payment success / confirmation" src="https://github.com/user-attachments/assets/13a15092-b29d-4980-b57b-1929b320c761" />
+<img width="2007" height="1007" alt="Payment success / confirmation" src="https://github.com/user-attachments/assets/9c779f76-6008-44a3-83c4-294fc9c308a3" />
 
 ### Theaters Page
 
@@ -136,7 +150,8 @@ What this view demonstrates:
 - **Separation of concerns:** theaters are managed independently from movies and showtimes.
 - **Scalable modeling:** the data model supports multiple screens per theater.
 
-<img width="958" height="455" alt="Theaters list" src="https://github.com/user-attachments/assets/dfc1ed48-186f-4193-918f-bfe8dee193a6" />
+<img width="2007" height="1009" alt="Theaters list" src="https://github.com/user-attachments/assets/37868516-6556-40a5-b0a8-4f1209a326d5" />
+<img width="2006" height="1004" alt="Theaters list - scrolled" src="https://github.com/user-attachments/assets/70ca544f-2cef-459b-8ad8-e0ad519b85c9" />
 
 ### Theater Showtimes Page
 
@@ -147,7 +162,10 @@ What this view demonstrates:
 - **Time-based browsing within a theater:** showtimes are grouped/filtered to reduce decision friction.
 - **Clear handoff:** each showtime links into seat selection.
 
-<img width="958" height="494" alt="Theater showtimes" src="https://github.com/user-attachments/assets/8d8c41be-ea47-4fc8-873a-1f0929495115" />
+<img width="2004" height="1007" alt="Theater showtimes" src="https://github.com/user-attachments/assets/cd1a6ac3-133b-4111-a137-5b94d184dc2b" />
+<img width="2006" height="1009" alt="Theater showtimes - date tabs" src="https://github.com/user-attachments/assets/ff0d1796-66c8-434f-bd79-0a0df73fa643" />
+<img width="2004" height="1003" alt="Theater showtimes - movie list" src="https://github.com/user-attachments/assets/bdc16773-196a-40ed-8f5e-07016abc1ceb" />
+<img width="2006" height="1003" alt="Theater showtimes - scrolled" src="https://github.com/user-attachments/assets/d6c4b77a-241d-41f7-a78b-87bbd72acb8b" />
 
 ### Login / Register
 
@@ -161,15 +179,15 @@ Onboarding flow:
 
 #### Login
 
-Modern sign-in with Google + email/password.
+A redesigned sign-in card: Google + email/password, branded focus states, and clear error handling.
 
-<img width="958" height="494" alt="Login (Google + email)" src="https://github.com/user-attachments/assets/e10bd818-4ef7-4316-9b3f-c7109b885ab9" />
+<img width="1999" height="1033" alt="Login (Google + email)" src="https://github.com/user-attachments/assets/fc2dc687-e7fb-48e3-94e6-ab75e3cb07e8" />
 
 #### Register
 
-Fast signup focused on the essentials (name, email, password) plus Google.
+Fast signup focused on the essentials (name, email, password) plus Google, sharing the same modernized card styling as Login.
 
-<img width="958" height="493" alt="Register (Google + email)" src="https://github.com/user-attachments/assets/fc67fea1-c5a4-432d-b518-3a806826aea2" />
+<img width="1998" height="1029" alt="Register (Google + email)" src="https://github.com/user-attachments/assets/af533933-1a9a-4e4a-bb84-876708b06da0" />
 
 #### Welcome
 
@@ -181,14 +199,15 @@ Welcome page acts as the “post-auth hub” and surfaces verification state wit
 
 Users can view/update profile details and upload an avatar (stored as media on the Django side).
 
-<img width="957" height="490" alt="Profile" src="https://github.com/user-attachments/assets/02549ace-f54e-4442-b996-4cf2284713ff" />
+<img width="2006" height="1007" alt="Profile" src="https://github.com/user-attachments/assets/1bbd5b28-8b74-4c3a-97f6-a78d292e78f0" />
 
 ### My Favorites
 
 Favorites are tied to the authenticated user and allow quick access to saved movies.
 
-<img width="958" height="490" alt="Favorites" src="https://github.com/user-attachments/assets/afc9892e-4533-4f59-aba2-cb010f41df97" />
-<img width="959" height="494" alt="Favorites (alternate view)" src="https://github.com/user-attachments/assets/bf557294-c032-47e8-b62e-c1f696ecf164" />
+<img width="2007" height="1005" alt="Favorites" src="https://github.com/user-attachments/assets/e2957a98-827f-4233-bba2-c726e9cbef51" />
+<img width="2006" height="1012" alt="Favorites - pagination" src="https://github.com/user-attachments/assets/c0aa7067-ecbd-4232-87d0-ae4f761bd3c0" />
+<img width="2007" height="1009" alt="Favorites (alternate view)" src="https://github.com/user-attachments/assets/d7e0b588-1267-485e-9d41-5c902c92dd90" />
 
 ### My Orders
 
@@ -199,7 +218,7 @@ What this view demonstrates:
 - **Order history:** list of purchases tied to the authenticated user.
 - **Traceability:** each order links to a detail view with purchased seats/tickets.
 
-<img width="955" height="494" alt="Orders history" src="https://github.com/user-attachments/assets/b2e09f79-4e8f-42b7-b6d1-fc41197cfa63" />
+<img width="2006" height="1003" alt="Orders history" src="https://github.com/user-attachments/assets/f2d28316-2b89-41b2-bde0-7fa7ebf1aca7" />
 
 ### Order Details
 
@@ -211,7 +230,7 @@ What this view demonstrates:
 - **Codes for validation:** ticket codes are meant for real-world scan/check-in flows.
 - **Full context:** showtime + theater/screen details stay attached to the purchase.
 
-<img width="959" height="490" alt="Order details" src="https://github.com/user-attachments/assets/182ba111-56ed-468c-818f-ce8e6f6479c7" />
+<img width="1998" height="1032" alt="Order details" src="https://github.com/user-attachments/assets/6a0f497b-6748-4107-9b82-4a1cde0b2006" />
 
 ### My Reviews
 
@@ -223,7 +242,9 @@ What this view demonstrates:
 - **Ownership rules:** users can edit/delete their own reviews (not others’).
 - **Movie linkage:** reviews remain tied to the movie for display on details pages.
 
-<img width="958" height="491" alt="My reviews" src="https://github.com/user-attachments/assets/42581842-51f2-4d98-9bcb-4104c08e4691" />
+<img width="2007" height="1006" alt="My reviews" src="https://github.com/user-attachments/assets/e6259a35-b912-4ea6-8abb-10699aa058e3" />
+<img width="2007" height="1007" alt="My reviews - pagination" src="https://github.com/user-attachments/assets/689dabe1-ce30-405d-be1e-64e902749afb" />
+<img width="2007" height="999" alt="My reviews (alternate view)" src="https://github.com/user-attachments/assets/364f6cde-5caf-41f5-96a1-e7962809c76d" />
 
 ## Admin Data Ops (for interviewers)
 
@@ -251,6 +272,7 @@ What this view demonstrates:
 
 - **Purpose:** Manage titles and metadata used across showtimes and orders.
 - **Data ops:** Change list includes "Download CSV", "Bulk upload", and "Download CSV template".
+- **Bulk actions:** Select movies and mark them Now Showing / Coming Soon / Ended in one click.
 - **Schemas:** Export aligns with bulk upload columns: title, duration_minutes, plot_summary, release_date, availability_status, rating_average, genres (comma-separated), image_url.
 - **Bulk upload flow:** Template → upload → preview grid → confirm.
   <img width="959" height="494" alt="image" src="https://github.com/user-attachments/assets/6c3246c0-660d-4607-ad0d-ffc6b221d4ea" />
@@ -305,7 +327,31 @@ What this view demonstrates:
 
 From `backend/`:
 
-1. Create and activate a virtual environment
+1. Create and activate a virtual environment:
+
+   **macOS / Linux**
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+   **Windows (Command Prompt)**
+
+   ```bat
+   python -m venv .venv
+   .venv\Scripts\activate.bat
+   ```
+
+   **Windows (PowerShell)**
+
+   ```powershell
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+   ```
+
+   Your prompt should now start with `(.venv)`. Run `deactivate` any time to exit the virtual environment.
+
 2. Install dependencies: `pip install -r requirements.txt`
 3. Configure env vars:
    - Copy `backend/.env.example` → `backend/.env`
@@ -337,6 +383,19 @@ Frontend runs at `http://localhost:5173`.
 After creating a Theater + Screen in the admin, generate a standard seat layout:
 
 - `python manage.py generate_seat_layout <screen_id> --rows 8 --seats-per-row 12`
+
+### Bulk-generate showtimes for Now Showing movies
+
+Loops the admin's "Generate schedule" logic across every Now Showing movie. Room-availability-aware: it skips a theater/day on a screen conflict instead of aborting the whole run.
+
+- `python manage.py generate_now_showing_schedule --start 2026-08-01 --end 2026-08-31 --times "12:00,15:30,19:00,22:00" --base-price 12.00`
+- Add `--movie <id>` / `--theater <id>` to scope it, or `--dry-run` to preview without writing anything.
+
+### Recalculate movie rating averages
+
+`Movie.rating_average` stays in sync automatically going forward via a `post_save`/`post_delete` signal on `Review`. Use this once to backfill movies that had reviews before that signal existed:
+
+- `python manage.py recalculate_ratings` (or add `--movie <id>` for a single movie)
 
 ## API overview (selected)
 

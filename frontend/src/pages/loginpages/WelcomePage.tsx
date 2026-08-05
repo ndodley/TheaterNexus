@@ -1,66 +1,15 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { resendVerification, getVerificationLink } from '../../api/auth'
-import { useAuth } from '../../auth/AuthContext'
+import { Link } from 'react-router-dom'
+import { useWelcomeStatus } from '../../hooks/auth/useWelcomeStatus'
 import '../../styles/authShell.css'
 import './WelcomePage.css'
 
 export default function WelcomePage() {
-  const { user, refreshMe } = useAuth()
-  const [params] = useSearchParams()
-  const navigate = useNavigate()
-
-  const isNew = useMemo(() => params.get('new') === '1', [params])
-  const [status, setStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  const email = (user?.email || '').trim()
-  const emailVerified = !!user?.email_verified
-
-  async function resend() {
-    if (!email) return
-    setLoading(true)
-    setStatus(null)
-    try {
-      await resendVerification(email)
-      setStatus({ kind: 'success', text: 'Verification email sent.' })
-    } catch {
-      setStatus({ kind: 'error', text: 'Could not send email right now.' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function verifyNow() {
-    setLoading(true)
-    setStatus(null)
-    try {
-      const { data } = await getVerificationLink()
-      const token = data?.token as string | undefined
-      if (!token) {
-        setStatus({ kind: 'error', text: 'Could not generate a verification link.' })
-        return
-      }
-      navigate(`/verify-email?token=${encodeURIComponent(token)}`)
-    } catch (e: any) {
-      setStatus({ kind: 'error', text: e?.response?.data?.detail || 'Could not generate a verification link.' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function refreshProfile() {
-    setLoading(true)
-    setStatus(null)
-    try {
-      await refreshMe()
-      setStatus({ kind: 'success', text: 'Profile refreshed.' })
-    } catch {
-      setStatus({ kind: 'error', text: 'Could not refresh profile.' })
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    user, isNew,
+    status, loading,
+    email, emailVerified,
+    resend, verifyNow, refreshProfile,
+  } = useWelcomeStatus()
 
   return (
     <section className="auth-shell">

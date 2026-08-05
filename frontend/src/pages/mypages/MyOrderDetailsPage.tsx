@@ -1,55 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams, useParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { imageUrl } from '../../api'
-import { getOrder } from '../../api/orders'
+import { useMyOrderDetails } from '../../hooks/orders/useMyOrders'
+import type { OrderItem } from '../../hooks/orders/useMyOrders'
 import '../../styles/orderItem.css'
 import '../../styles/ticketChip.css'
 import './MyOrderDetailsPage.css'
 
-interface OrderItem {
-    id: number
-    showtime: number
-    seat: number
-    seat_label?: string
-    unit_price: number | string
-    showtime_info?: {
-        movie_id?: number
-        movie_title?: string
-        movie_image?: string | null
-        theater_name?: string
-        screen_name?: string
-        start_time?: string
-    }
-}
-
-interface Order {
-    id: number
-    status: string
-    currency: string
-    subtotal: number | string
-    fees: number | string
-    tax: number | string
-    total: number | string
-    items: OrderItem[]
-    created_at: string
-}
-
 export default function OrderDetailsPage() {
-    const [params] = useSearchParams()
-    const { id: routeId } = useParams()
-    const orderId = Number(params.get('order_id') || routeId || 0)
-    const [order, setOrder] = useState<Order | null>(null)
-    const [error, setError] = useState<string | null>(null)
-
-    // Loads the order data if available
-    useEffect(() => {
-        let active = true
-        if (!orderId) return
-        getOrder(orderId)
-        .then(res => { if (active) setOrder(res.data) })
-        .catch(err => { if (active) setError(err?.message ?? 'Failed to load order') })
-        return () => { active = false }
-    }, [orderId])
+    const { orderId, order, error } = useMyOrderDetails()
 
     // Group items by showtime for display
     const groups = (order?.items || []).reduce((acc: Array<{ key: string, items: OrderItem[] }>, it) => {

@@ -1,14 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { imageUrl } from '../api'
-import { getMovies } from '../api/movies'
 import type { Movie } from '../types'
 import HeroCarousel, { type HeroSlide } from '../components/HeroCarousel'
-import { useFetch } from '../hooks/useFetch'
+import { useHomeMovies } from '../hooks/movies/useMovies'
 import './HomePage.css'
 
 function HomePage() {
   const navigate = useNavigate()
-  const { data: movies = [], loading, error } = useFetch(() => getMovies().then(res => res.data), [])
+  const { movies = [], loading, error } = useHomeMovies()
 
   const statusKey = (m: Movie) => (m.availability_status || '').toLowerCase()
   const hasPoster = (m: Movie) => !!(m.image_url || m.image)

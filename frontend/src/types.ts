@@ -66,6 +66,7 @@ export interface Review {
   user_email: string
   movie: number
   movie_title: string
+  movie_image?: string | null
   rating: number
   title: string
   content: string

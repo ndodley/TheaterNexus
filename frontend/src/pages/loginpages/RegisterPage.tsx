@@ -1,46 +1,19 @@
-import { useState } from 'react'
-import { useAuth } from '../../auth/AuthContext'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import GoogleSignInButton from '../../auth/GoogleSignInButton'
+import { useRegisterForm } from '../../hooks/auth/useRegisterForm'
 import '../../styles/authShell.css'
 import './RegisterPage.css'
 
 export default function RegisterPage() {
-  
-  const { register, loginWithGoogle } = useAuth()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null); setLoading(true)
-    
-    try {
-      const form = new FormData()
-      form.append('email', email.trim())
-      form.append('password', password)
-
-      if (firstName) { 
-        form.append('first_name', firstName) 
-      }
-
-      if (lastName) { 
-        form.append('last_name', lastName) 
-      }
-
-      await register(form)
-      navigate('/welcome?new=1')
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Registration failed')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    email, setEmail,
+    password, setPassword,
+    firstName, setFirstName,
+    lastName, setLastName,
+    loading, error,
+    onSubmit, onGoogleCredential,
+  } = useRegisterForm()
 
   return (
     <section className="auth-shell">
@@ -53,11 +26,7 @@ export default function RegisterPage() {
         <div className="provider-grid register-providerGrid">
           <GoogleSignInButton
             mode="signup"
-            onCredential={async (credential) => {
-              setError(null)
-              const { created } = await loginWithGoogle(credential)
-              navigate(created ? '/welcome?new=1' : '/')
-            }}
+            onCredential={onGoogleCredential}
           />
         </div>
 
@@ -71,11 +40,11 @@ export default function RegisterPage() {
           <div className="grid-2">
             <label>
               <span>First name</span>
-              <input autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              <input type="text" autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} />
             </label>
             <label>
               <span>Last name</span>
-              <input autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} />
+              <input type="text" autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} />
             </label>
           </div>
           <label>

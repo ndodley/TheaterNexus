@@ -2,13 +2,46 @@
 .cart-summaryBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 16px 18px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  background:
+    radial-gradient(ellipse 90% 100% at 0% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 70%),
+    var(--surface);
 }
-.cart-summaryCount { font-weight: 700; }
-.cart-checkoutBtn { min-width: 160px; }
-.cart-emptyCard { opacity: 0.9; }
+.cart-summaryCount { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.cart-summaryIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  font-size: 15px;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+}
+.cart-checkoutBtn { min-width: 160px; box-shadow: var(--shadow); }
+
+.cart-emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 4px;
+}
+.cart-emptyIcon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+.cart-emptyTitle { font-weight: 700; font-size: 1.1rem; }
+
+.cart-sectionHeading { margin: 0 0 12px; }
 
 .cart-itemRow {
   display: grid;
@@ -16,16 +49,48 @@
   gap: 18px;
   align-items: center;
   margin-bottom: 14px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
-.cart-itemPoster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; }
+.cart-itemRow:hover { border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); box-shadow: var(--shadow); }
+.cart-itemPoster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: var(--shadow); }
 .cart-itemPosterPlaceholder { aspect-ratio: 2 / 3; display: grid; place-items: center; }
 .cart-itemTitleRow { display: flex; align-items: baseline; gap: 10px; }
-.cart-itemTitle { margin: 0 0 4px 0; }
+.cart-itemTitle { margin: 0 0 6px 0; }
+.cart-itemMeta { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.cart-itemMetaRow { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.9rem; }
+.cart-itemMetaRow .mi-icon { font-size: 0.85rem; line-height: 1; }
 .cart-itemSeatChips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .cart-itemPriceValue { font-weight: 700; font-size: 18px; }
+.cart-itemPriceBreakdown { font-size: 12px; margin-top: 2px; }
+
+/* Removable seat chips -- distinct from the plain read-only .chip
+   badges (like "Ticket (4)") since these are actionable remove buttons. */
+.cart-seatChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.cart-seatChip span { opacity: 0.6; }
+.cart-seatChip:hover {
+  background: color-mix(in srgb, #ef4444 14%, var(--surface-2));
+  border-color: color-mix(in srgb, #ef4444 45%, var(--border));
+  color: #dc2626;
+}
+.cart-seatChip:hover span { opacity: 1; }
 
 .cart-subtotalRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 8px;
+  padding: 18px 20px;
 }
+.cart-subtotalText { display: flex; align-items: baseline; gap: 10px; font-size: 1.1rem; }

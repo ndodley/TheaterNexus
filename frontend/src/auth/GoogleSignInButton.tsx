@@ -29,9 +29,24 @@ export default function GoogleSignInButton({ onCredential, mode = 'signin' }: Pr
   useEffect(() => {
     if (!clientId) return
 
+    // If the Identity Services script already finished loading (e.g. this
+    // is a second GoogleSignInButton mounted after navigating from
+    // Login to Register, or back), window.google is already populated --
+    // no need to wait for anything.
+    if (window.google?.accounts?.id) {
+      setReady(true)
+      return
+    }
+
     const existing = document.getElementById(GOOGLE_SCRIPT_ID) as HTMLScriptElement | null
     if (existing) {
-      setReady(true)
+      // The tag is in the DOM, but its *load* event may not have fired yet --
+      // assuming it was already ready here (the old behavior) raced the
+      // actual network load and would immediately report "Google sign-in
+      // unavailable" if this component mounted before the script finished.
+      // Wait for the real load/error events instead.
+      existing.addEventListener('load', () => setReady(true))
+      existing.addEventListener('error', () => setError('Failed to load Google sign-in'))
       return
     }
 

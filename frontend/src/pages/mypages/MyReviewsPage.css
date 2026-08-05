@@ -1,7 +1,26 @@
-/* My Reviews page (moved out of MyReviews.tsx inline styles) */
-.myReviews-header { display: flex; justify-content: space-between; align-items: baseline; }
+/* My Reviews page. Cards use the shared .media-grid layout (poster on the
+   left, content on the right) with the same hover-lift treatment as
+   showtimeCard-article/movieGrid-card, so the page matches the rest of
+   the app's modernized card language. */
+.myReviews-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
 .myReviews-emptyCard { padding: 12px; }
-.myReviews-item { padding: 12px; margin-bottom: 12px; }
+
+.myReviews-item {
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.myReviews-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(124,58,237,0.35);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.12);
+}
+
+/* aspect-ratio (not a fixed px height) so the full poster shows, matching
+   movieGrid-poster / showtimeCard-poster. */
+.myReviews-poster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; }
+.myReviews-posterPlaceholder { aspect-ratio: 2 / 3; display: grid; place-items: center; }
+
 .myReviews-itemHeader { display: flex; justify-content: space-between; align-items: center; }
 .myReviews-itemTitle { font-weight: 600; margin-top: 8px; }
-.myReviews-actions { display: flex; gap: 8px; }
+.myReviews-actions { display: flex; gap: 8px; margin-top: 12px; }

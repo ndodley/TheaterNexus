@@ -1,144 +1,67 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { imageUrl } from '../../api'
-import { getMovie } from '../../api/movies'
-import { getShowtimes } from '../../api/showtimes'
-import { getMovieReviews, getMovieReviewSummary, createReview, updateReview, deleteReview as deleteReviewApi } from '../../api/reviews'
-import type { Review, ReviewSummary, ShowTime } from '../../types'
 import { useAuth } from '../../auth/AuthContext'
-import { useFetch } from '../../hooks/useFetch'
-import { useFavoriteToggle } from '../../hooks/useFavoriteToggle'
+import { useMovie } from '../../hooks/movies/useMovies'
+import { useMovieShowtimes } from '../../hooks/showtimes/useMovieShowtimes'
+import { useReviews } from '../../hooks/reviews/useReviews'
+import { usePagination } from '../../hooks/usePagination'
 import '../../styles/dateTabs.css'
 import '../../styles/showtimeCard.css'
+import '../../styles/pagination.css'
 import './MovieDetailsPage.css'
+
+const REVIEWS_PAGE_SIZE = 4
+
+function StarPicker({ value, onChange, size = 24 }: { value: number; onChange: (n: number) => void; size?: number }) {
+  return (
+    <div className="starPicker" role="radiogroup" aria-label="Rating">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          className={`starPicker-star ${n <= value ? 'is-filled' : ''}`}
+          style={{ fontSize: size }}
+          onClick={() => onChange(n)}
+          aria-pressed={n === value}
+          aria-label={`${n} star${n === 1 ? '' : 's'}`}
+        >★</button>
+      ))}
+    </div>
+  )
+}
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>()
-  const { toggleFavorite: toggleFavoriteBase } = useFavoriteToggle()
-  const { data: movie, setData: setMovie, error } = useFetch(
-    () => getMovie(id as string).then(res => res.data),
-    [id],
-  )
+  const { movie, error, toggleFavorite } = useMovie(id)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date()
     const pad = (n: number) => String(n).padStart(2, '0')
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
   })
   const [selectedTheater, setSelectedTheater] = useState<number | 'all'>('all')
+  const { theaters, groupedByTheater } = useMovieShowtimes(id, selectedDate, selectedTheater)
 
-  // Reviews state
   const { user, isAuthenticated } = useAuth()
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [summary, setSummary] = useState<ReviewSummary | null>(null)
-  const [draftRating, setDraftRating] = useState<number>(5)
-  const [draftTitle, setDraftTitle] = useState<string>('')
-  const [draftContent, setDraftContent] = useState<string>('')
-  const [submitting, setSubmitting] = useState<boolean>(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editRating, setEditRating] = useState<number>(5)
-  const [editTitle, setEditTitle] = useState<string>('')
-  const [editContent, setEditContent] = useState<string>('')
-
-  async function toggleFavorite() {
-    if (!id || !movie) return
-    await toggleFavoriteBase(Number(id), movie.is_favorite, (next) => {
-      setMovie(prev => prev ? { ...prev, is_favorite: next } : prev)
-    })
-  }
-
-  const { data: showtimes = [] } = useFetch(() => {
-    const params: Record<string, string> = { movie: String(id), date: selectedDate }
-    if (selectedTheater !== 'all') params.theater = String(selectedTheater)
-    return getShowtimes(params).then(res => res.data)
-  }, [id, selectedDate, selectedTheater])
-
-  // Load reviews list and summary
-  useEffect(() => {
-    if (!id) return
-    getMovieReviews(id).then(res => setReviews(res.data)).catch(() => setReviews([]))
-    getMovieReviewSummary(id).then(res => setSummary(res.data)).catch(() => setSummary({ movie_id: Number(id), average_rating: 0, count: 0 }))
-  }, [id])
-
-  async function refreshReviews() {
-    if (!id) return
-    const list = await getMovieReviews(id)
-    setReviews(list.data)
-    const s = await getMovieReviewSummary(id)
-    setSummary(s.data)
-  }
-
-  async function submitReview(e: React.FormEvent) {
-    e.preventDefault()
-    if (!id || !isAuthenticated) return
-    setSubmitting(true)
-    try {
-      await createReview(id, { rating: draftRating, title: draftTitle, content: draftContent })
-      await refreshReviews()
-      setDraftRating(5)
-      setDraftTitle('')
-      setDraftContent('')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function deleteReview(reviewId: number) {
-    if (!id || !isAuthenticated) return
-    setSubmitting(true)
-    try {
-      await deleteReviewApi(reviewId)
-      await refreshReviews()
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  function startEdit(rv: Review) {
-    setEditingId(rv.id)
-    setEditRating(rv.rating)
-    setEditTitle(rv.title || '')
-    setEditContent(rv.content || '')
-  }
-
-  async function saveEdit(reviewId: number) {
-    if (!id || !isAuthenticated || !editingId) return
-    setSubmitting(true)
-    try {
-      await updateReview(reviewId, { rating: editRating, title: editTitle, content: editContent })
-      await refreshReviews()
-      setEditingId(null)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const theaters = useMemo(() => {
-    const map = new Map<number, string>()
-    for (const s of showtimes) {
-      map.set(s.theater, s.theater_name)
-    }
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
-  }, [showtimes])
-
-  // Group by theater, then by screen to avoid mixed and duplicate times
-  const groupedByTheater = useMemo(() => {
-    const grouped = new Map<number, Map<number, ShowTime[]>>()
-    for (const s of showtimes) {
-      let screens = grouped.get(s.theater)
-      if (!screens) {
-        screens = new Map<number, ShowTime[]>()
-        grouped.set(s.theater, screens)
-      }
-      const arr = screens.get(s.screen) || []
-      // Deduplicate by id within a screen
-      if (!arr.find(x => x.id === s.id)) arr.push(s)
-      // Sort by start time
-      arr.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-      screens.set(s.screen, arr)
-    }
-    return grouped
-  }, [showtimes])
+  const {
+    reviews,
+    summary,
+    draftRating, setDraftRating,
+    draftTitle, setDraftTitle,
+    draftContent, setDraftContent,
+    submitting,
+    editingId,
+    editRating, setEditRating,
+    editTitle, setEditTitle,
+    editContent, setEditContent,
+    submitReview,
+    deleteReview,
+    startEdit,
+    saveEdit,
+    cancelEdit,
+  } = useReviews(id, isAuthenticated)
+  const { setPage: setReviewsPage, safePage: reviewsSafePage, totalPages: reviewsTotalPages, pagedItems: pagedReviews } = usePagination(reviews, REVIEWS_PAGE_SIZE)
 
   if (error) return <section className="container"><div className="card">Error: {error}</div></section>
   if (!movie) return <section className="container"><div className="card">Loading…</div></section>
@@ -214,7 +137,7 @@ export default function MovieDetailsPage() {
           <div className="mt-16">
             <Link to="/movies"><button className="btn-solid-primary">Back to Movies</button></Link>
           </div>
-          <div className="mt-24">
+          <div className="mt-24 movieDetails-showtimesBlock">
             <h3 className="movieDetails-sectionHeading">Showtimes</h3>
             {/* Date tabs like Cinemark */}
             <div className="tabs" aria-label="Choose a date">
@@ -284,19 +207,24 @@ export default function MovieDetailsPage() {
             })}
           </div>
           {/* Reviews Section */}
-          <div className="mt-24">
+          <div className="mt-24 movieDetails-reviewsBlock">
             <h3 className="movieDetails-sectionHeading">Reviews</h3>
             {isAuthenticated ? (
-              <form onSubmit={submitReview} className="card movieDetails-card12">
+              <form onSubmit={submitReview} className="card movieDetails-composerCard">
+                <div className="movieDetails-composerHeading">Write a review</div>
                 <div className="movieDetails-fieldGrid">
-                  <label htmlFor="rating"><strong>Rating</strong></label>
-                  <select id="rating" value={draftRating} onChange={e => setDraftRating(parseInt(e.target.value))}>
-                    {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} ⭐</option>)}
-                  </select>
-                  <label htmlFor="title"><strong>Title</strong></label>
-                  <input id="title" value={draftTitle} onChange={e => setDraftTitle(e.target.value)} placeholder="Short headline" />
-                  <label htmlFor="content"><strong>Review</strong></label>
-                  <textarea id="content" value={draftContent} onChange={e => setDraftContent(e.target.value)} placeholder="Share your thoughts" rows={4} />
+                  <div className="movieDetails-field">
+                    <label><strong>Your rating</strong></label>
+                    <StarPicker value={draftRating} onChange={setDraftRating} />
+                  </div>
+                  <div className="movieDetails-field">
+                    <label htmlFor="title"><strong>Title</strong></label>
+                    <input id="title" type="text" value={draftTitle} onChange={e => setDraftTitle(e.target.value)} placeholder="Short headline" />
+                  </div>
+                  <div className="movieDetails-field movieDetails-field--full">
+                    <label htmlFor="content"><strong>Review</strong></label>
+                    <textarea id="content" value={draftContent} onChange={e => setDraftContent(e.target.value)} placeholder="Share your thoughts" rows={4} />
+                  </div>
                 </div>
                 <div className="movieDetails-actionsRow">
                   <button type="submit" disabled={submitting} className="btn-solid-primary">
@@ -311,43 +239,70 @@ export default function MovieDetailsPage() {
             )}
 
             {reviews.length === 0 && <div className="card movieDetails-cardPad12">No reviews yet.</div>}
-            {reviews.map(rv => (
-              <div key={rv.id} className="card movieDetails-reviewCard">
-                <div className="movieDetails-reviewHeader">
-                  <strong>{rv.title || 'Untitled'}</strong>
-                  <span>{'⭐'.repeat(Math.max(1, Math.min(5, rv.rating)))}</span>
-                </div>
-                <small className="opacity-8">
-                  by {rv.user_email || rv.user_name} • {new Date(rv.created_at).toLocaleString()}
-                  {rv.updated_at !== rv.created_at ? ` • edited ${new Date(rv.updated_at).toLocaleString()}` : ''}
+
+            {reviews.length > 0 && (
+              <div className="pagination-bar">
+                <small className="opacity-7">
+                  Showing {(reviewsSafePage - 1) * REVIEWS_PAGE_SIZE + 1}-{Math.min(reviewsSafePage * REVIEWS_PAGE_SIZE, reviews.length)} of {reviews.length}
                 </small>
-                <p className="mt-8">{rv.content}</p>
-                {user && rv.user === user.id && (
-                  <div className="movieDetails-editActionsRow">
-                    <button onClick={() => startEdit(rv)} className="movieDetails-editBtn">Edit</button>
-                    <button onClick={() => deleteReview(rv.id)} className="btn-solid-muted">Delete</button>
-                  </div>
-                )}
-                {editingId === rv.id && (
-                  <div className="card movieDetails-editCard">
-                    <div className="movieDetails-fieldGrid">
-                      <label><strong>Rating</strong></label>
-                      <select value={editRating} onChange={e => setEditRating(parseInt(e.target.value))}>
-                        {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} ⭐</option>)}
-                      </select>
-                      <label><strong>Title</strong></label>
-                      <input value={editTitle} onChange={e => setEditTitle(e.target.value)} />
-                      <label><strong>Review</strong></label>
-                      <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} />
-                    </div>
-                    <div className="movieDetails-editActionsRow">
-                      <button onClick={() => saveEdit(rv.id)} disabled={submitting} className="movieDetails-saveBtn">Save</button>
-                      <button onClick={() => setEditingId(null)} className="btn-solid-muted">Cancel</button>
-                    </div>
-                  </div>
-                )}
+                <div className="pagination-controls">
+                  <button type="button" className="btn btn-ghost" disabled={reviewsSafePage <= 1} onClick={() => setReviewsPage(p => p - 1)}>Prev</button>
+                  <span className="pagination-pageIndicator">Page {reviewsSafePage} / {reviewsTotalPages}</span>
+                  <button type="button" className="btn btn-ghost" disabled={reviewsSafePage >= reviewsTotalPages} onClick={() => setReviewsPage(p => p + 1)}>Next</button>
+                </div>
               </div>
-            ))}
+            )}
+
+            {pagedReviews.map(rv => {
+              const clampedRating = Math.max(1, Math.min(5, rv.rating))
+              const initial = (rv.user_email || rv.user_name || '?').charAt(0).toUpperCase()
+              return (
+                <div key={rv.id} className="card movieDetails-reviewCard">
+                  <div className="movieDetails-reviewAvatar" aria-hidden>{initial}</div>
+                  <div className="movieDetails-reviewBody">
+                    <div className="movieDetails-reviewHeader">
+                      <strong>{rv.title || 'Untitled'}</strong>
+                      <span className="movieDetails-reviewStars" aria-label={`${clampedRating} out of 5 stars`}>
+                        {'★'.repeat(clampedRating)}<span className="movieDetails-reviewStarsEmpty">{'★'.repeat(5 - clampedRating)}</span>
+                      </span>
+                    </div>
+                    <small className="opacity-8">
+                      by {rv.user_email || rv.user_name} • {new Date(rv.created_at).toLocaleString()}
+                      {rv.updated_at !== rv.created_at ? ` • edited ${new Date(rv.updated_at).toLocaleString()}` : ''}
+                    </small>
+                    <p className="mt-8">{rv.content}</p>
+                    {user && rv.user === user.id && (
+                      <div className="movieDetails-editActionsRow">
+                        <button onClick={() => startEdit(rv)} className="movieDetails-editBtn">Edit</button>
+                        <button onClick={() => deleteReview(rv.id)} className="btn-solid-muted">Delete</button>
+                      </div>
+                    )}
+                    {editingId === rv.id && (
+                      <div className="card movieDetails-editCard">
+                        <div className="movieDetails-fieldGrid">
+                          <div className="movieDetails-field">
+                            <label><strong>Your rating</strong></label>
+                            <StarPicker value={editRating} onChange={setEditRating} size={20} />
+                          </div>
+                          <div className="movieDetails-field">
+                            <label><strong>Title</strong></label>
+                            <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+                          </div>
+                          <div className="movieDetails-field movieDetails-field--full">
+                            <label><strong>Review</strong></label>
+                            <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3} />
+                          </div>
+                        </div>
+                        <div className="movieDetails-editActionsRow">
+                          <button onClick={() => saveEdit(rv.id)} disabled={submitting} className="movieDetails-saveBtn">Save</button>
+                          <button onClick={cancelEdit} className="btn-solid-muted">Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

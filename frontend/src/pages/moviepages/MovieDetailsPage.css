@@ -1,14 +1,32 @@
 /* Movie Details layout */
-.details-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+.details-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  background:
+    radial-gradient(ellipse 90% 60% at 12% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 65%),
+    var(--surface);
+}
 @media (max-width: 800px) {
   .details-grid { grid-template-columns: 1fr; }
 }
 
 /* Details info chips */
 .kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.kv-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
-.kv-icon { font-size: 16px; opacity: 0.85; }
-.kv-content { display: grid; gap: 2px; }
+.kv-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); transition: border-color 160ms ease, transform 160ms ease; }
+.kv-item:hover { border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); transform: translateY(-1px); }
+.kv-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 16px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
+}
+.kv-content { display: grid; gap: 2px; min-width: 0; }
 .kv-label { font-size: 12px; opacity: 0.7; }
 .kv-value { font-weight: 700; }
 .movieDetails-capitalize { text-transform: capitalize; }
@@ -16,25 +34,130 @@
 /* Poster + title/favorite row (title row & fav button reuse the shared
    styles/showtimeCard.css .showtimeCard-titleRow / .showtimeCard-favBtn,
    which are byte-identical patterns) */
-.movieDetails-poster { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; }
+.movieDetails-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  transition: transform 200ms ease;
+}
+.movieDetails-poster:hover { transform: translateY(-2px); }
 .movieDetails-genresRow { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.movieDetails-genresRow .badge { transition: background-color 160ms ease, color 160ms ease; }
+.movieDetails-genresRow .badge:hover { background: var(--primary); color: #fff; }
+
+/* Favorite button -- scoped to this page only, so Showtimes/TheaterShowtimes
+   cards (which share .showtimeCard-favBtn) keep their existing look. */
+.details-grid .showtimeCard-favBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  justify-content: center;
+  padding: 0;
+  font-size: 18px;
+}
 
 /* Section headings shared by the Showtimes and Reviews h3's on this page */
 .movieDetails-sectionHeading { margin: 0 0 8px; }
 
 .movieDetails-chipRow { margin: 12px 0; }
 /* Per-theater card in the Showtimes section */
-.movieDetails-theaterCard { padding: 12px; margin-bottom: 12px; }
+.movieDetails-theaterCard { padding: 16px; margin-bottom: 14px; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.movieDetails-theaterCard:hover { border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); box-shadow: var(--shadow); }
 .movieDetails-screenName { font-weight: 600; opacity: 0.9; }
+
+/* Date tabs / theater chips / time chips, restyled for this page only
+   (dateTabs.css is shared by Showtimes and TheaterShowtimes -- these
+   scoped overrides win on specificity so those pages stay untouched). */
+.movieDetails-showtimesBlock .tabs { border-bottom: none; gap: 8px; }
+.movieDetails-showtimesBlock .tab-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: var(--surface-2);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.movieDetails-showtimesBlock .tab-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.movieDetails-showtimesBlock .tab-btn small { opacity: 0.75; }
+.movieDetails-showtimesBlock .tab-btn.active small { opacity: 0.9; }
+.movieDetails-showtimesBlock .time-chip {
+  border-radius: 10px;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.movieDetails-showtimesBlock .time-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--primary) 45%, transparent);
+}
 
 /* Reviews section */
 .movieDetails-card12 { padding: 12px; margin-bottom: 12px; }
 .movieDetails-cardPad12 { padding: 12px; }
-.movieDetails-fieldGrid { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
-.movieDetails-actionsRow { margin-top: 12px; display: flex; gap: 8px; }
-.movieDetails-reviewCard { padding: 12px; margin-bottom: 8px; }
-.movieDetails-reviewHeader { display: flex; justify-content: space-between; }
+
+.movieDetails-composerCard { padding: 18px; margin-bottom: 16px; }
+.movieDetails-composerHeading { font-weight: 700; margin-bottom: 12px; }
+
+.movieDetails-fieldGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: start; }
+.movieDetails-field { display: grid; gap: 6px; }
+.movieDetails-field--full { grid-column: 1 / -1; }
+.movieDetails-field label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
+.movieDetails-field input[type="text"] { width: 100%; }
+.movieDetails-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 90px;
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+/* Clickable 1-5 star rating picker used by both the new-review composer
+   and the edit-review form. */
+.starPicker { display: inline-flex; gap: 2px; }
+.starPicker-star {
+  border: none;
+  background: transparent;
+  padding: 2px;
+  line-height: 1;
+  color: var(--border);
+  cursor: pointer;
+  transition: transform 120ms ease, color 120ms ease;
+}
+.starPicker-star:hover { transform: scale(1.15); color: #f59e0b; box-shadow: none; }
+.starPicker-star:focus,
+.starPicker-star:focus-visible { outline: none; box-shadow: none; }
+.starPicker-star.is-filled { color: #f59e0b; }
+
+.movieDetails-actionsRow { margin-top: 16px; display: flex; gap: 8px; }
+
+.movieDetails-reviewCard { display: flex; gap: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.movieDetails-reviewAvatar {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-300), var(--primary));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+.movieDetails-reviewBody { flex: 1 1 auto; min-width: 0; }
+.movieDetails-reviewHeader { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.movieDetails-reviewStars { color: #f59e0b; letter-spacing: 1px; white-space: nowrap; }
+.movieDetails-reviewStarsEmpty { color: var(--border); }
 .movieDetails-editActionsRow { display: flex; gap: 8px; margin-top: 8px; }
 .movieDetails-editBtn { background-color: #eef; color: #333; }
-.movieDetails-editCard { padding: 12px; margin-top: 8px; }
+.movieDetails-editCard { padding: 14px; margin-top: 10px; }
 .movieDetails-saveBtn { background-color: var(--primary); color: #fff; }

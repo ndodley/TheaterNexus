@@ -1,49 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { verifyEmail } from '../../api/auth'
+import { Link } from 'react-router-dom'
+import { useEmailVerification } from '../../hooks/auth/useEmailVerification'
 import '../../styles/authShell.css'
 import './VerifyEmailPage.css'
 
-type Status = 'idle' | 'loading' | 'success' | 'error'
-
 export default function VerifyEmailPage() {
-  const [params] = useSearchParams()
-  const token = useMemo(() => params.get('token') || '', [params])
-
-  const [status, setStatus] = useState<Status>('idle')
-  const [message, setMessage] = useState<string>('')
-
-  useEffect(() => {
-    let active = true
-
-    async function run() {
-      if (!token) {
-        if (!active) return
-        setStatus('error')
-        setMessage('Missing verification token. Please open the link from your email again.')
-        return
-      }
-
-      if (!active) return
-      setStatus('loading')
-      setMessage('Verifying your email…')
-
-      try {
-        await verifyEmail(token)
-        if (!active) return
-        setStatus('success')
-        setMessage('Email verified! Your account is ready.')
-      } catch (err: any) {
-        if (!active) return
-        const detail = err?.response?.data?.detail
-        setStatus('error')
-        setMessage(typeof detail === 'string' ? detail : 'Verification failed. The link may be expired.')
-      }
-    }
-
-    run()
-    return () => { active = false }
-  }, [token])
+  const { status, message } = useEmailVerification()
 
   return (
     <section className="auth-shell">

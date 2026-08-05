@@ -3,6 +3,7 @@
 // functions either from here or directly from './api/movies', './api/orders', etc.
 export * from './client'
 export * from './movies'
+export * from './favorites'
 export * from './theaters'
 export * from './showtimes'
 export * from './orders'
