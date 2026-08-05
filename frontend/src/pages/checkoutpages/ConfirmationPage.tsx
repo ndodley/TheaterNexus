@@ -1,52 +1,12 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { imageUrl } from '../../api'
-import { getOrder } from '../../api/orders'
+import { useOrderConfirmation, type OrderItem } from '../../hooks/orders/useOrderConfirmation'
 import '../../styles/orderItem.css'
 import '../../styles/ticketChip.css'
 import './ConfirmationPage.css'
 
-interface OrderItem {
-  id: number
-  showtime: number
-  seat: number
-  seat_label?: string
-  unit_price: number | string
-  showtime_info?: {
-    movie_id?: number
-    movie_title?: string
-    movie_image?: string | null
-    theater_name?: string
-    screen_name?: string
-    start_time?: string
-  }
-}
-
-interface Order {
-  id: number
-  status: string
-  currency: string
-  subtotal: number | string
-  fees: number | string
-  tax: number | string
-  total: number | string
-  items: OrderItem[]
-}
-
 export default function ConfirmationPage() {
-  const [params] = useSearchParams()
-  const orderId = Number(params.get('order_id') || 0)
-  const [order, setOrder] = useState<Order | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let active = true
-    if (!orderId) return
-    getOrder(orderId)
-      .then(res => { if (active) setOrder(res.data) })
-      .catch(err => { if (active) setError(err?.message ?? 'Failed to load order') })
-    return () => { active = false }
-  }, [orderId])
+  const { order, error } = useOrderConfirmation()
 
   return (
     <section className="container fade-in section-pad">

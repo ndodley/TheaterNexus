@@ -4,6 +4,16 @@ export interface UseFetchResult<T> {
   data: T | undefined
   setData: React.Dispatch<React.SetStateAction<T | undefined>>
   loading: boolean
+  /**
+   * True only until the FIRST load (success or failure) resolves, then
+   * false forever after -- even while `loading` flips true again on
+   * later refetches. Use this (not `loading`) to decide whether to swap
+   * the whole page for a full-page loading state: gating on `loading`
+   * instead means every refetch (e.g. an auto-refetch triggered by
+   * toggling a filter) unmounts the page and any open UI (like an
+   * expanded filter panel) along with it.
+   */
+  initialLoading: boolean
   error: string | null
   setError: React.Dispatch<React.SetStateAction<string | null>>
   /** Re-runs the fetcher on demand (e.g. after a mutation). */
@@ -30,6 +40,7 @@ export function useFetch<T>(
 ): UseFetchResult<T> {
   const [data, setData] = useState<T | undefined>(undefined)
   const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const activeRef = useRef(true)
   const fetcherRef = useRef(fetcher)
@@ -43,7 +54,7 @@ export function useFetch<T>(
     fetcherRef.current()
       .then((res) => { if (activeRef.current) setData(res) })
       .catch((err: any) => { if (activeRef.current) setError(err?.message ?? errorFallback) })
-      .finally(() => { if (activeRef.current) setLoading(false) })
+      .finally(() => { if (activeRef.current) { setLoading(false); setInitialLoading(false) } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -53,5 +64,5 @@ export function useFetch<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
-  return { data, setData, loading, error, setError, refetch: load }
+  return { data, setData, loading, initialLoading, error, setError, refetch: load }
 }

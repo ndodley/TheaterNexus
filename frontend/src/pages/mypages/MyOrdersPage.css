@@ -1,9 +1,15 @@
-/* Orders History page (moved out of OrdersHistory.tsx inline styles) */
-.ordersHistory-list { list-style: none; padding: 0; }
+/* My Orders page. Rows reuse the shared .order-itemRow layout (poster,
+   info, price columns) from styles/orderItem.css -- the exact same poster
+   treatment as the order-details page -- with the same hover-lift as
+   movieGrid-card/showtimeCard-article/myReviews-item for a consistent,
+   modernized card language across the app. */
+.ordersHistory-list { display: flex; flex-direction: column; }
 .ordersHistory-row {
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  margin-bottom: 16px;
 }
-.ordersHistory-rowRight { display: flex; gap: 12px; align-items: center; }
+.ordersHistory-row:hover {
+  transform: translateY(-3px);
+  border-color: rgba(124,58,237,0.35);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.12);
+}

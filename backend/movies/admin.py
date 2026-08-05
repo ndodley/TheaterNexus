@@ -24,6 +24,7 @@ class GenreAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 @admin.register(Movie)
 class MovieAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	csv_export_filename = "movies.csv"
+	actions = ["mark_as_now_showing", "mark_as_coming_soon", "mark_as_ended"]
 	list_display = [
 		"id",
 		"title",
@@ -35,6 +36,21 @@ class MovieAdmin(ExportCsvAdminMixin, admin.ModelAdmin):
 	list_filter = ["availability_status", "release_date", "genres"]
 	search_fields = ["title", "plot_summary"]
 	filter_horizontal = ["genres"]
+
+	@admin.action(description="Mark selected movies as Now Showing")
+	def mark_as_now_showing(self, request, queryset):
+		updated = queryset.update(availability_status=Movie.Availability.NOW_SHOWING)
+		self.message_user(request, f"{updated} movie(s) marked as Now Showing.", level=messages.SUCCESS)
+
+	@admin.action(description="Mark selected movies as Coming Soon")
+	def mark_as_coming_soon(self, request, queryset):
+		updated = queryset.update(availability_status=Movie.Availability.COMING_SOON)
+		self.message_user(request, f"{updated} movie(s) marked as Coming Soon.", level=messages.SUCCESS)
+
+	@admin.action(description="Mark selected movies as Ended")
+	def mark_as_ended(self, request, queryset):
+		updated = queryset.update(availability_status=Movie.Availability.ENDED)
+		self.message_user(request, f"{updated} movie(s) marked as Ended.", level=messages.SUCCESS)
 
 	# Use a custom changelist template to surface object-tools links
 	change_list_template = "admin/movies/movie/change_list.html"

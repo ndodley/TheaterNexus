@@ -1,7 +1,11 @@
 /* Theme variables */
 :root {
-  /* Light theme (default) */
-  --bg: #ffffff;
+  /* Light theme (default). --bg is a soft lavender-tinted off-white
+     (not pure white) so --surface (cards, the search panel) has
+     something to contrast against -- previously both were #ffffff,
+     which made card boundaries nearly invisible (only a faint shadow
+     separated them from the page). */
+  --bg: #f1eff8;
   --surface: #ffffff;
   --text: #0f172a; /* slate-900 */
   --muted: #475569; /* slate-600 */
@@ -14,11 +18,12 @@
      buttons) so they read as distinct from the card/page behind them in
      both themes, instead of the old near-invisible rgba overlays. */
   --surface-2: #f1f5f9; /* slate-100 */
-  /* Footer needs its own token: --surface is literally #ffffff in light
-     mode (same as --bg), so a plain .site-footer { background: var(--surface) }
-     was invisible against the page above it. This is a violet wash tied to
-     --primary instead of a generic gray, so it reads as branded (darker
-     step than the very first pass, so it reads clearly against the page). */
+  /* Footer needs its own token: a plain .site-footer { background:
+     var(--surface) } reads as near-white, almost the same as --bg, so it
+     barely stood out from the page above it. This is a violet wash tied
+     to --primary instead of a generic gray, so it reads as branded
+     (darker step than the very first pass, so it reads clearly against
+     the page). */
   --footer-bg: #ddd6fe;
   --badge-text: var(--primary-700);
   /* Navbar theme (light default). Text is white on both themes since

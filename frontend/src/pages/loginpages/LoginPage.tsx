@@ -1,30 +1,16 @@
-import { useState } from 'react'
-import { useAuth } from '../../auth/AuthContext'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import GoogleSignInButton from '../../auth/GoogleSignInButton'
+import { useLoginForm } from '../../hooks/auth/useLoginForm'
 import '../../styles/authShell.css'
 import './LoginPage.css'
 
 export default function LoginPage() {
-  const { login, loginWithGoogle } = useAuth()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null); setLoading(true)
-    try {
-      await login({ email: email.trim(), password })
-      navigate('/')
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Login failed')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    email, setEmail,
+    password, setPassword,
+    loading, error,
+    onSubmit, onGoogleCredential,
+  } = useLoginForm()
 
   return (
     <section className="auth-shell">
@@ -37,11 +23,7 @@ export default function LoginPage() {
         <div className="provider-grid">
           <GoogleSignInButton
             mode="signin"
-            onCredential={async (credential) => {
-              setError(null)
-              const { created } = await loginWithGoogle(credential)
-              navigate(created ? '/welcome?new=1' : '/')
-            }}
+            onCredential={onGoogleCredential}
           />
         </div>
 
