@@ -314,6 +314,7 @@ What this view demonstrates:
 - **Database:** PostgreSQL
 - **Frontend:** React + TypeScript + Vite
 - **Payments:** Stripe (PaymentIntents + webhooks)
+- **Dependency management:** frontend dependencies are kept current via `npm-check-updates`; TypeScript is intentionally pinned to the 6.x line rather than 7.x, since `typescript-eslint` and other tooling don't yet support TypeScript 7's new native (Go-based) compiler.
 
 ## Run locally
 
